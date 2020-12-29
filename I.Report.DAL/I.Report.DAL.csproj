@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{91BF6ABC-AC95-4D07-9BC0-EFEC976BCE65}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>I.Report.DAL</RootNamespace>
+    <AssemblyName>I.Report.DAL</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.5.0.0\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="I.MES.ClientCore">
+      <HintPath>..\..\I.MES\I.MES.ClientCore\bin\Debug\I.MES.ClientCore.dll</HintPath>
+    </Reference>
+    <Reference Include="I.MES.Models">
+      <HintPath>..\..\I.MES\I.MES.Models\bin\Debug\I.MES.Models.dll</HintPath>
+    </Reference>
+    <Reference Include="I.MES.Tools">
+      <HintPath>..\..\I.MES\I.MES.Tools\bin\Debug\I.MES.Tools.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.Entity" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceModel.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ManualPurchaseReturnOP.cs" />
+    <Compile Include="MenuOP.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Report.Context.cs">
+      <DependentUpon>Report.Context.tt</DependentUpon>
+      <SubType>Code</SubType>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="Report.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="Report.Designer.cs">
+      <DependentUpon>Report.edmx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="RptCompanyOP.cs" />
+    <Compile Include="RptRoleOP.cs" />
+    <Compile Include="RptUserRoleOP.cs" />
+    <Compile Include="RPT_Company.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_Fac_User_Map.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_Menu.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_Role.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_User.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_UserCompany.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_UserRole.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_UserRolePriv.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="UserOP.cs" />
+    <Compile Include="ModelHelper.cs" />
+    <Compile Include="WcfHelper.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.Config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config" />
+    <None Include="Report.Context.tt">
+      <DependentUpon>Report.edmx</DependentUpon>
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Report.Context.cs</LastGenOutput>
+    </None>
+    <None Include="Report.edmx.diagram">
+      <DependentUpon>Report.edmx</DependentUpon>
+    </None>
+    <None Include="Report.tt">
+      <DependentUpon>Report.edmx</DependentUpon>
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Report.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <EntityDeploy Include="Report.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>Report.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

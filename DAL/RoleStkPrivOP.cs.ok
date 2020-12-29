@@ -1,0 +1,162 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+
+namespace DAL
+{
+   public  class RoleStkPrivOP:BaseOP
+    {
+        public RoleStkPrivOP(string factID)
+        {
+            CompanyCode = factID;
+        }
+
+        public IEnumerable<SYS_RoleStkPriv> GetData(string RoleCode, int PageNumber, int PageSize, out int total)
+        { 
+            using(IMES3Entities db=new IMES3Entities())
+            {
+                var item = db.SYS_RoleStkPriv.Where(p => p.RoleCode == RoleCode);
+
+                total = item.Count();
+
+                var data = item.OrderBy(p => p.RoleCode).Skip((PageNumber - 1) * PageSize).Take(PageSize);
+
+                return data.ToList();
+            }      
+        }
+
+        public List<SYS_RoleStkPrivViewModel> GetRoleStkPriv(string RoleCode, int PageNumber, int PageSize, out int total)
+       {
+            using(IMES3Entities db=new IMES3Entities())
+            {
+                var item = from roleStk in db.SYS_RoleStkPriv
+                           join role in db.SYS_Role on roleStk.RoleCode equals role.RoleCode
+                           join stk in db.WMS_StkMstr on roleStk.StkCode equals stk.StkCode
+                           where roleStk.RoleCode == RoleCode
+                           select new SYS_RoleStkPrivViewModel
+                           {
+                                RoleCode=roleStk.RoleCode,
+                                StkCode=roleStk.StkCode,
+                                RoleName=role.RoleName,
+                                StkName=stk.StkName,
+                                AllowDownBin=roleStk.AllowDownBin,
+                                AllowUpBin=roleStk.AllowUpBin,
+                                AllowIn=roleStk.AllowIn,
+                                AllowOut=roleStk.AllowOut,
+                                ID=roleStk.ID
+                           };
+
+                total = item.Count();
+
+                var data = item.OrderBy(p => p.RoleCode).Skip((PageNumber - 1) * PageSize).Take(PageSize);
+
+                return item.ToList();
+            }
+       }
+
+       public int Create(SYS_RoleStkPriv data)
+       {
+           using (IMES3Entities db = new IMES3Entities())
+           {
+
+
+               db.SYS_RoleStkPriv.Add(data);
+               return db.SaveChanges();
+
+
+           }
+       }
+
+        public List<SelectListItem> GetRole()
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+               var data= db.SYS_Role.ToList();
+
+               List<SelectListItem> li = new List<SelectListItem>();
+
+               foreach (var role in data)
+               {
+                   li.Add(new SelectListItem { 
+                    Text=role.RoleName,
+                    Value=role.RoleCode
+                   }
+                       );
+               }
+
+               return li;
+            }
+        }
+
+        public List<SelectListItem> GetStk()
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var data = db.WMS_StkMstr.ToList();
+
+                List<SelectListItem> li = new List<SelectListItem>();
+
+                foreach (var stk in data)
+                {
+                    li.Add(new SelectListItem
+                    {
+                        Text = stk.StkName,
+                        Value = stk.StkCode
+                    }
+                        );
+                }
+
+                return li;
+            }
+        }
+
+        public SYS_RoleStkPriv GetList(int id)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var data = db.SYS_RoleStkPriv.FirstOrDefault(p => p.ID == id);
+
+                return data;
+            }
+        }
+
+        public int Update(SYS_RoleStkPriv data)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.SYS_RoleStkPriv.FirstOrDefault(p => p.ID == data.ID);
+                //item.UserName = data.UserName;
+                //return db.SaveChanges();
+
+                if (item != null)
+                {
+                    int ID = item.ID;
+                    data.LatestModifyMachine = " ";
+                    data.LatestModifyTime = DateTime.Now;
+                    data.CreateMachine = " ";
+                    data.CreateUserAccount = " ";
+                    data.CreateTime = DateTime.Now;
+                    data.LatestModifyUserAccount = " ";
+                    item.CopyFrom(data);
+                }
+                return db.SaveChanges();
+            }
+        }
+
+        public int Delete(int id)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.SYS_RoleStkPriv.FirstOrDefault(p => p.ID == id);
+                if (item != null)
+                {
+                    db.SYS_RoleStkPriv.Remove(item);
+                }
+                return db.SaveChanges();
+            }
+        }
+    }
+}

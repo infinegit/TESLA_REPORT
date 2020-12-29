@@ -1,0 +1,80 @@
+﻿@{
+    ViewBag.Title = "Add";
+}
+
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">Printer number</td>
+            <td class="field">
+                <input id="addForm_PrinterCode" name="addForm_PrinterCode" class="easyui-textbox" data-options="required:true"/>
+            </td>
+
+            <td class="label">Printer name</td>
+            <td class="field">
+                <input id="addForm_PrinterName" name="addForm_PrinterName" class="easyui-textbox" />
+            </td>
+        </tr>
+
+        <tr> 
+            <td class="label">Computer name</td>
+            <td class="field">
+                <input id="addForm_PrinterServer" name="addForm_PrinterServer" class="easyui-textbox" />
+            </td>
+
+            <td class="label">Print description</td>
+            <td class="field">
+                <input id="addForm_PrinterDesc" name="addForm_PrinterDesc" class="easyui-textbox" />
+            </td>
+        </tr>
+
+        <tr> 
+            <td class="label">Print location</td>
+            <td class="field">
+                <input id="addForm_PrinterLocation" name="addForm_PrinterLocation" class="easyui-textbox" />
+            </td>
+        </tr>
+    </table>
+    <div style="padding: 5px; text-align: center;">
+        <a href="javascript:void(0)" id="addForm_Save" class="easyui-linkbutton" icon="icon-ok">Add</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">Cancel</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    //提交数据
+    $('#addForm_Save').click(function () {
+        var PrinterCode = $("#addForm_PrinterCode").val();
+        var PrinterServer = $("#addForm_PrinterServer").val();
+        var PrinterName = $("#addForm_PrinterName").val();
+        var PrinterDesc = $("#addForm_PrinterDesc").val();
+        var PrinterLocation = $("#addForm_PrinterLocation").val();
+
+        if (PrinterCode == "")
+        {
+            $.messager.alert("Add failed", "Printer number cannot be empty！", "error");
+            return;
+        }
+        $.messager.confirm("Tips", "Confirm submission?", function (r) {
+            if (r) {
+                var data =
+                    {
+                        PrinterCode: PrinterCode,
+                        PrinterServer: PrinterServer,
+                        PrinterName: PrinterName,
+                        PrinterDesc: PrinterDesc,
+                        PrinterLocation: PrinterLocation
+                    };
+                $.post("@Url.Action("AddCfg")", data, function (result) {
+                    if (result.state === "success") {   
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert("Tips", "Added successfully！");
+                    } else {
+                        $.messager.alert("Error", result.message, "error");
+                    }
+                });
+            };
+        });
+    });
+</script>

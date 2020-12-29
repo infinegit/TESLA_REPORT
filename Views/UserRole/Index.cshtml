@@ -1,0 +1,159 @@
+﻿@model IEnumerable<I.MES.Models.SYS_UserRole>
+
+@{
+    ViewBag.Title = "Index";
+}
+@using Resources
+<script type="text/javascript">
+
+    $(function () {
+        $('#cc').combobox({
+            url: '@Url.Action("QueryUser")',
+            valueField: 'Value',
+            textField: 'Text',
+            onSelect: function (rms) {
+                getUserRole(rms);
+                GetRole(rms);
+            }
+
+        });
+
+        var vlistRight = "";
+
+        function getUserRole(rms) {
+            $.ajax({
+                type: "POST", //提交的类型
+                url: "@Url.Action("GetUserRoleToList")",//提交地址
+                data: { Account: rms.Value },
+                success: function (msg) { //回调方法
+                    vlistRight = "";
+                    vlist = "";
+                    jQuery.each(msg, function (i, n) {
+                        vlistRight += "<option value=" + n.Value + ">" + n.Text + "</option>";
+                    })
+
+                    $("#listRight").empty();
+                    $("#listRight").append(vlistRight);
+                }
+            });
+        }
+
+
+
+        var vlist = "";
+        function GetRole(rms) {
+            $.ajax({
+                type: "POST", //提交的类型
+                url: "@Url.Action("Query")",//提交地址
+                data: { Account: rms.Value },
+                success: function (msg) { //回调方法
+                    vlist = "";
+
+                    jQuery.each(msg, function (i, n) {
+                        vlist += "<option value=" + n.Value + ">" + n.Text + "</option>";
+                    })
+
+                    $("#listLeft").empty();
+                    $("#listLeft").append(vlist);
+                }
+            });
+        }
+
+        //left move
+        $("#btnRight").click(function () {
+
+            //数据option选中的数据集合赋值给变量vSelect
+            var vSelect = $("#listLeft option:selected");
+            //克隆数据添加到listRight中
+            vSelect.clone().appendTo("#listRight");
+            //同时移除listRight中的option
+            vSelect.remove();
+        });
+        //right move
+        $("#btnLeft").click(function () {
+            var vSelect = $("#listRight option:selected");
+            vSelect.clone().appendTo("#listLeft");
+            vSelect.remove();
+        });
+
+        $("#update").click(function () {
+
+
+            var strRole = "";
+            $("#listRight option").each(function () { //遍历全部option
+                var txt = $(this).val(); //获取option的内容
+                strRole += txt + ";";
+            });
+
+            $.ajax({
+                type: "POST", //提交的类型
+                url: "@Url.Action("UpateUserRole")",//提交地址
+                data: { Account: $("[name='dept']").val(), RoList: strRole },
+                success: function (msg) { //回调方法
+                    alert("OK");
+                }
+                });
+
+        });
+    })
+
+    function refush()
+    {
+        location.reload();
+    }
+
+</script>
+<form id="fm" method="post" novalidate>
+    <fieldset style="border: solid 1px #aaa; padding: 15px; font-size: 15px;">
+        <legend style="font-size: 15px;">@Html.Label(Resource.Essential_information)</legend>
+        <div style="padding: 3px;">
+            <table align="left" border="0" cellpadding="0" cellspacing="0" style="width: auto; font-size: 25px;">
+                <tr>
+                    <td class="td-right1-color" style="font-size: 13px;">@Html.Label(Resource.User_name):</td>
+                    <td style="width: auto">
+                        <input id="cc" name="dept" style="font-size: 13px;">
+                    </td>
+
+            </table>
+        </div>
+    </fieldset>
+    <fieldset style="border: solid 1px #aaa; padding: 15px; font-size: 15px;">
+        <legend style="font-size: 15px;">@Html.Label(Resource.Role_information):</legend>
+        <div style="width: 100%;">
+            <table style="width: 100%; text-align: center">
+                <tr>
+
+                    <td>@Html.Label(Resource.Available_roles)</td>
+                    <td></td>
+                    <td>@Html.Label(Resource.Current_role)</td>
+                </tr>
+                <tr>
+                    <td>
+                        <select size="20" style="width: 150px" name="listLeft" id="listLeft" class="normal">
+                        </select>
+
+                    </td>
+                    <td>
+                        @*<input type="button" id="btnRight" value=">>Add>>" style="font-size: 30px; width: auto" /><br />
+                          <input type="button" id="btnLeft" value="<<Remove<" style="font-size: 30px; width: auto" />*@
+                        <button type="button" id="btnRight" style="font-size: 30px; width: auto">→@Html.Label(Resource.Add)→</button><br />
+                        <button type="button" id="btnLeft" style="font-size: 30px; width: auto">←@Html.Label(Resource.Remove)←</button>
+                    </td>
+                    <td>
+                        <select size="20" style="width: 150px" name="listRight" id="listRight" class="normal">
+                        </select>
+
+                    </td>
+
+                </tr>
+                <tr>
+                    <td colspan="3">
+
+                        <a id="update" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">@Html.Label(Resource.Edit)</a>
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+    </fieldset>
+</form>

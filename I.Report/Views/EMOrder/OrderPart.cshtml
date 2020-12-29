@@ -1,0 +1,67 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "领料信息";
+}
+
+<script type="text/javascript">
+    $(function () {
+        $("#OrderPartGird").datagrid({
+            url: "@Url.Action("GetOrderPartList")?OrderCode=" + $("#OrderCode").val(),
+            striped: true,
+            fitColumns: true,
+            singleSelect: true,
+            rownumbers: true,
+            pagination: true,
+            nowrap: false,
+            toolbar: "toolbar",
+            //pageList: [10, 20, 50, 100, 150, 200],
+            showFooter: true,
+            //queryParams: { txtSearch: $("#txtSearch").val() },
+            columns: [
+                [                    
+                { field: 'OrderCode', title: '工单', width: 70, align: 'left' },
+                { field: 'PartCode', title: '零件号', width: 70, align: 'left' },
+                { field: 'PartDesc', title: '零件描述', width: 70, align: 'left' },
+                { field: 'Qty', title: '数量', width: 70, align: 'left' },
+                { field: 'Unit', title: '单位', width: 70, align: 'left' },
+                    {
+                        field: 'CreateTime',
+                        title: '领料时间',
+                        formatter: function (date) {
+                            if (date) {
+                                var pa = /.*\((.*)\)/;
+                                var unixtime = date.match(pa)[1].substring(0, 10);
+                                return getTime(unixtime);
+                            } else {
+                                return '--';
+                            }
+                        },
+                        width: 100,
+                        align: 'center'
+                    }
+                ]
+            ]
+        });
+
+        var p = $("#OrderPartGird").datagrid("getPager");
+        $(p).pagination({
+            pageNumber: 1,
+            pageSize: '@ConstInfo.PAGE_SIZE',
+            showPageList: false,
+            beforePageText: '第',
+            afterPageText: '页 共{pages}页',
+            displayMsg: 'Displaying {from} to {to} of {total} items'
+        });
+    });
+</script>
+<div id="MainDiv">
+    <div id="toolbar" style="width: 100%;">
+        <input type="hidden" id="OrderCode" name ="OrderCode" value="@ViewBag.OrderCode"/>
+    </div>
+
+    <div>
+        <table id="OrderPartGird" title="领料列表" style="width: 100%; height: auto; border: 1px solid #CCC">
+        </table>
+    </div>
+</div>
+

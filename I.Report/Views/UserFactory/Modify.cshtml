@@ -1,0 +1,103 @@
+﻿@{
+    ViewBag.Title = "Modify";
+}
+@using Resources
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">  @Html.Label(Resource.User_account)</td>
+            <td class="field">
+                <input id="modifyForm_UserAccount" name="modifyForm_UserAccount" class="easyui-textbox" data-options="required:true" value="@Model.UserAccount" disabled="disabled" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">
+                @Html.Label(Resource.Factory_code) 
+
+            </td>
+            <td class="field">
+                <input id="modifyForm_FactoryCode" name="modifyForm_FactoryCode" class="easyui-textbox" data-options="required:true" value="@Model.FactoryCode" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.Whether_Enable) </td>
+            <td class="field">
+                @Html.Label(Resource.NG)<input type="radio" name="modifyForm_Enabled" value="0" />&nbsp;&nbsp;&nbsp;&nbsp;
+                @Html.Label(Resource.OK)<input type="radio" name="modifyForm_Enabled" value="1" checked="checked" />
+            </td>
+            <td style="display:none"><input id="modifyForm_Enabled" class="easyui-textbox" value="@Model.Enabled.ToString()" /></td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.Whether_default)</td>
+            <td class="field">
+                @Html.Label(Resource.NG)<input type="radio" name="modifyForm_IsDefault" value="0" />&nbsp;&nbsp;&nbsp;&nbsp;
+                @Html.Label(Resource.OK)<input type="radio" name="modifyForm_IsDefault" value="1" checked="checked" />
+            </td>
+            <td style="display:none"><input id="modifyForm_IsDefault" class="easyui-textbox" value="@Model.IsDefault.ToString()" /></td>
+        </tr>
+
+        <tr style="display:none"><td><input id="modifyForm_ID" name="modifyForm_ID" class="easyui-textbox" value="@Model.ID" /></td></tr>
+    </table>
+    <div style="padding: 15px; text-align: center;">
+        <a href="javascript:void(0)" id="modifyForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Edit)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(function () {
+        SetRadio("modifyForm_IsDefault", $("#modifyForm_IsDefault").val());
+        SetRadio("modifyForm_Enabled", $("#modifyForm_Enabled").val());
+    });
+    //提交数据
+    $('#modifyForm_Save').click(function () {
+        var ID = $("#modifyForm_ID").val();
+        var UserAccount = $("#modifyForm_UserAccount").val();
+        var FactoryCode = $("#modifyForm_FactoryCode").val();
+        var Enabled = $('input[name="modifyForm_Enabled"]:checked').val();
+        var IsDefault = $('input[name="modifyForm_IsDefault"]:checked').val();
+
+        if (UserAccount == "") {
+            $.messager.alert('@Html.Label(Resource.Modification_failed)','@Html.Label(Resource.User_account_cannot_be_empty)');
+            return;
+        }
+        if (FactoryCode == "") {
+            $.messager.alert('@Html.Label(Resource.Modification_failed)',@Html.Label(Resource.Factory_code_cannot_be_empty) );
+            return;
+        }
+
+        $.messager.confirm(@Html.Label(Resource.Tips), @Html.Label(Resource.Confirm_submission), function (r) {
+            if (r) {
+                var data =
+                    {
+                        ID: ID,
+                        UserAccount: UserAccount,
+                        FactoryCode: FactoryCode,
+                        Enabled: Enabled,
+                        IsDefault: IsDefault
+                    };
+                $.post("@Url.Action("ModifyCfg")", data, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.Modification_succeeded)');
+                    } else {
+                        $.messager.alert(@Html.Label(Resource.Error), result.message,@Html.Label(Resource.Error));
+                    }
+                });
+            };
+        });
+    });
+
+    function SetRadio(ParamName, ParamValue) {
+        if (ParamValue == "False") {
+            $("input:radio[name='" + ParamName + "'][value='0']").attr('checked', 'true');
+        }
+        else {
+            $("input:radio[name='" + ParamName + "'][value='1']").attr('checked', 'true');
+        }
+    }
+</script>

@@ -1,0 +1,139 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<script type="text/javascript">
+    $(function () {
+
+        $('#datagrid').datagrid({
+            url: "@Url.Action("GetRptRoles")",
+            striped: true,
+            fitColumns: true,
+            singleSelect: true,
+            rownumbers: true,
+            pagination: true,
+            nowrap: false,
+            toolbar: "toolbar",
+            showFooter: true,
+            queryParams: { txtSearch: $("#txtSearch").val() },
+            columns: [[
+                { field: 'ID', checkbox: true },
+                { field: 'RoleName', title: 'Role name', width: 180, align: 'left' },
+                { field: 'RoleDesc', title: 'describe', width: 280, align: 'left' },
+                { field: 'IsActive', title: 'Whether Enable', width: 60, align: 'left' }
+            ]]
+        });
+
+        var p = $('#datagrid').datagrid('getPager'); 
+        $(p).pagination({
+
+            pageNumber:1, //默认显示第几页   
+            pageSize:@ConstInfo.PAGE_SIZE,   
+                showPageList:false,
+                beforePageText:'page',  
+            afterPageText: 'page     in total{pages}page',
+                displayMsg:'Displaying {from} to {to} of {total} items' 
+        })
+
+
+        $("#add").click(function(){
+            openDlg({
+                url:"@Url.Action("Create")",
+                width: 800,
+                height: 540,
+                title:"newly build"
+            });
+        });
+
+        $("#modify").click(function(){
+                
+            var row= $("#datagrid").datagrid('getSelected');
+            if(row==null||row==undefined)
+            {
+                $.messager.alert("Tips","No rows are selected！");
+                return;
+            }
+            openDlg({
+                url:"@Url.Action("Edit")?id="+row.ID,
+                width: 800,
+                height: 540,
+                title:"Edit"
+            });
+        });
+
+        $("#delete").click(function(){
+               
+            var row= $("#datagrid").datagrid('getSelected');
+            if(row==null||row==undefined)
+            {
+                $.messager.alert("Tips","No rows are selected！");
+                return;
+            }
+
+            $.messager.confirm("Tips","Are you sure you want to delete this data？",function(r){
+                if(r){
+                    $.post("@Url.Action("Delete")", { id: row.ID }, function(result) {
+                        if (result.state == "success") {
+                            refush();
+                        } else {
+                            $.messager.alert("Error", "Deletion failed！", "error");
+                        }
+                    });
+                }
+            });
+
+        });
+
+        $("#txtSearch").keydown(function(e) {
+            var keyCode;
+            if (window.event) {
+                keyCode = e.keyCode;
+            } else if (e.which) {
+                keyCode = e.which;
+            }
+            if (keyCode == 13) {
+                $("#indexForm").attr("method", "get");
+                $("#indexForm").submit();
+            }
+        });
+
+        $("#search").click(function() {
+            $("#indexForm").attr("method", "get");
+            $("#indexForm").submit();
+        });
+
+    });
+
+    function refush() {
+        $('#datagrid').datagrid('load');
+
+    }
+
+
+</script>
+<div id="toolbar" style="width: 100%;">
+
+    <div>
+        <a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">Add</a>
+        <a id="modify" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">Update</a>
+        <a id="delete" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">Delete</a>
+    </div>
+    <form action="@Url.Action("Index")" method="post" id="indexForm">
+        <div style="margin: 10px 0;">
+            <span style="padding: 0 5px;">
+                keyword：@Html.TextBox("txtSearch")
+            </span>
+            <span style="padding: 0 5px;">
+                <a id="search" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search'">query</a>
+            </span>
+        </div>
+</div>
+</form>
+
+    <div>
+        <table id="datagrid" title="Information list" style="width: 100%; height: auto; border: 1px solid #ccc;">
+
+        </table>
+        <form  action="@Url.Action("GetUserList")" method="post" id="selectPage" name="selectPage"></form>
+    </div>
+

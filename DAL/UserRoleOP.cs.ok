@@ -1,0 +1,134 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+
+
+namespace DAL
+{
+    public class UserRoleOP : BaseOP
+    {
+
+        public UserRoleOP(string CompanyCode)
+        {
+            CompanyCode = CompanyCode;
+        }
+
+
+        public IEnumerable<SYS_UserRole> GetUserRole(string UserAccount)
+        {
+            using (IMES3Entities db1 = new IMES3Entities())
+            {
+                var data = db1.SYS_UserRole.Where(p => p.UserAccount == UserAccount).ToList();
+
+                return data;
+            }
+        }
+
+        public List<SelectListItem> GetUserRoleToList(string UserAccount)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var data = from userRole in db.SYS_UserRole
+                           join role in db.SYS_Role
+                           on userRole.RoleCode equals role.RoleCode
+                           where userRole.UserAccount == UserAccount
+                           select new
+                           {
+                               UserAccount = userRole.UserAccount,
+                               RoleName = role.RoleName,
+                               RoleCode = role.RoleCode
+                           };
+
+                List<SelectListItem> sl = new List<SelectListItem>();
+
+                foreach (var v in data)
+                {
+                    sl.Add(new SelectListItem()
+                    {
+                        Text = v.RoleName,
+                        Value = v.RoleCode
+                    });
+                }
+
+                return sl;
+            }
+        }
+
+        /// <summary>
+        /// 获取角色列表
+        /// </summary>
+        /// <returns>返回角色集合</returns>
+        public List<SYS_Role> GetRoleList(string Account)
+        {
+            using (IMES3Entities db1 = new IMES3Entities())
+            {
+
+                var data = from c in db1.SYS_Role
+                           where !(from d in db1.SYS_UserRole where d.UserAccount == Account select d.RoleCode).Contains(c.RoleCode)
+                           select c;
+
+                return data.ToList();
+            }
+        }
+
+        /// <summary>
+        /// 获取所有用户信息
+        /// </summary>
+        /// <returns>返回用户信息集合</returns>
+        public List<SYS_User> GetUserList()
+        {
+            using (IMES3Entities db1 = new IMES3Entities())
+            {
+
+                var data = db1.SYS_User.ToList();
+
+                return data;
+            }
+        }
+
+        public int UpdateUserRole(string UserAccount, string RoleList)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.SYS_UserRole.Where(p => p.UserAccount == UserAccount).ToList();
+
+                if (item.Count > 0)
+                {
+                    item.ForEach(p =>
+                        {
+                            db.SYS_UserRole.Remove(p);
+                        });
+                }
+
+                if (!string.IsNullOrEmpty(RoleList))
+                {
+                    RoleList = RoleList.Remove(RoleList.LastIndexOf(';'));
+
+                    string[] strRole = RoleList.Split(';');
+
+                    foreach (var Role in strRole)
+                    {
+                        SYS_UserRole sur = new SYS_UserRole();
+
+                        sur.UserAccount = UserAccount;
+                        sur.RoleCode = Role;
+                        sur.EffitiveTime = DateTime.Now;
+                        sur.ExpireTime = Convert.ToDateTime("2099-12-31 00:00:00.000");
+                        sur.CreateTime = DateTime.Now;
+                        sur.CreateUserAccount = " ";
+                        sur.CreateMachine = " ";
+                        sur.LatestModifyMachine = "";
+                        sur.LatestModifyTime = DateTime.Now;
+                        sur.LatestModifyUserAccount = "";
+
+                        db.SYS_UserRole.Add(sur);
+                    }
+                }
+                return db.SaveChanges();
+            }
+        }
+    }
+}

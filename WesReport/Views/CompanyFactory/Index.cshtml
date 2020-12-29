@@ -1,0 +1,240 @@
+﻿@model I.MES.Models.SYS_Company
+
+@{
+    ViewBag.Title = "Index";
+}
+
+
+
+<script type="text/javascript">
+    var editIndex = undefined;
+    function endEditing() {
+        if (editIndex == undefined) { return true }
+        if ($('#datagrid').datagrid('validateRow', editIndex)) {
+            var ed = $('#datagrid').datagrid('getEditor', { index: editIndex, field: 'ID' });
+            $('#datagrid').datagrid('endEdit', editIndex);
+            editIndex = undefined;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    function onClickRow(index) {
+        if (editIndex != index) {
+            if (endEditing()) {
+                $('#datagrid').datagrid('selectRow', index)
+                        .datagrid('beginEdit', index);
+                editIndex = index;
+            } else {
+                $('#datagrid').datagrid('selectRow', editIndex);
+            }
+        }
+    }
+    function append() {
+        if (endEditing()) {
+            $('#datagrid').datagrid('appendRow', {});
+            editIndex = $('#datagrid').datagrid('getRows').length - 1;
+            $('#datagrid').datagrid('selectRow', editIndex)
+                    .datagrid('beginEdit', editIndex);
+        }
+    }
+    function removeit() {
+        if (editIndex == undefined) { return }
+        $('#datagrid').datagrid('cancelEdit', editIndex)
+                .datagrid('deleteRow', editIndex);
+        editIndex = undefined;
+    }
+    function accept() {
+        if (endEditing()) {
+            var companyCode = $("#txtCompanyCode").val();
+            if (companyCode == "") {
+                $.messager.alert("information", "Factory code cannot be empty！");
+                return;
+            }
+
+           $('#datagrid').datagrid('acceptChanges');
+           var rows = $('#datagrid').datagrid('getRows');
+            if (rows.length > 0) {
+                var req = new Object();
+                req["datagrid"] = JSON.stringify(rows);
+                req["companyCode"] = companyCode;
+                $.post("@Url.Action("SaveFactorys")", req, function (result) {
+                    if (result.state === "OK") {
+                        $.messager.alert("information", "The operation was successful！", "OK");
+                        clear();
+                    } else {
+                        $.messager.alert("Error", result.message, "error");
+                    }
+                });
+            } else {
+                $.messager.alert("Error", "No rows selected");
+            }
+        }
+    }
+    function reject() {
+        $('#datagrid').datagrid('rejectChanges');
+        editIndex = undefined;
+    }
+    function getChanges() {
+        var rows = $('#datagrid').datagrid('getChanges');
+        alert(rows.length + ' rows are changed!');
+    }
+    function clear() {
+    }
+</script>
+
+
+<body>
+    <form action="@Url.Action("Index")" method="post" id="indexForm">
+        <div id="company" class="easyui-panel" title="Company information" style="width:700px;height:200px;padding:10px;">
+
+            <table>
+                <tr>
+                    <td align="left" width="100px">
+                        Company code:
+                    </td>
+                    <td align="left" width="200px">
+                        @Html.TextBox("txtCompanyCode", Model.CompanyCode, new { readOnly = "true" })
+                        @Html.Hidden("hfID", Model.ID)
+                        @Html.Hidden("hfCreateMachine", Model.CreateMachine)
+                        @Html.Hidden("hfCreateTime", Model.CreateTime)
+                        @Html.Hidden("hfCreateUserAccount", Model.CreateUserAccount)
+                    </td>
+                    <td align="left" width="100px">
+                        Corporate name：
+                    </td>
+                    <td align="left" width="200px">
+                        @Html.TextBox("txtCompanyName", Model.CompanyName)
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="left" width="100px">
+                        Company description：
+                    </td>
+                    <td align="left" width="400px" colspan="3">
+                        @Html.TextBox("txtCompanyFullName", Model.CompanyFullName, new { style = "width:435px" })
+                    </td>
+
+                </tr>
+                <tr>
+                    <td align="left" width="100px">
+                        SAP Company code：
+                    </td>
+                    <td align="left" width="200px">
+                        @Html.TextBox("txtSAPCompanyCode", Model.SAPCompanyCode)
+                    </td>
+                    <td align="left" width="100px">
+                        QAD Company code：
+                    </td>
+                    <td align="left" width="200px">
+                        @Html.TextBox("txtQADCompanyCode", Model.QADCompanyCode)
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <a id="update" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">determine</a>
+                        @*<a id="cancle" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>*@
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="margin:20px 0;"></div>
+
+        <table id="datagrid" class="easyui-datagrid" title="工厂列表" style="width:700px;height:auto"
+               data-options="rownumbers:true,singleSelect:true,toolbar: '#tb',onClickRow:onClickRow"></table>
+        <div id="tb" style="height: auto">
+            <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="append()">Add row</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="removeit()">Delete row</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save',plain:true" onclick="accept()">Receive edit</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-undo',plain:true" onclick="reject()">Reset editing</a>
+        </div>
+    </form>
+</body>
+
+
+
+
+<script type="text/javascript">
+    $(function () {
+        $('#datagrid').datagrid({
+            height: 340,
+            url: '@Url.Action("GetFactoryList")',
+            method: 'POST',
+            striped: true,
+            fitColumns: true,
+            singleSelect: true,
+            rownumbers: true,
+            pagination: false,
+            nowrap: false,
+            showFooter: false,
+            columns: [[
+                { field: 'ID', title: 'ID', width: 60, align: 'left' },
+                { field: 'FactoryCode', title: 'Factory code', width: 120, align: 'left', editor: 'textbox' },
+                { field: 'FactoryName', title: 'Name of factory', width: 150, align: 'left', editor: 'textbox' },
+            ]]
+        });
+
+    })
+
+    $("#update").click(function () {
+    
+     
+        var txtCompanyCode = $("#txtCompanyCode").val();
+        var txtCompanyName = $("#txtCompanyName").val();
+        var txtCompanyFullName = $("#txtCompanyFullName").val();
+        var txtSAPCompanyCode = $("#txtSAPCompanyCode").val();
+        var txtQADCompanyCode = $("#txtQADCompanyCode").val();
+
+        if (txtCompanyCode == '' || txtCompanyCode == null || txtCompanyCode == undefined) {
+            $.messager.alert("Tips", "  Company code cannot be empty！");
+            return
+        }
+
+        if (txtCompanyName == '' || txtCompanyName == null || txtCompanyName == undefined) {
+            $.messager.alert("Tips", "Company name cannot be empty！");
+            return
+        }
+
+        if (txtCompanyFullName == '' || txtCompanyFullName == null || txtCompanyFullName == undefined) {
+            $.messager.alert("Tips", "Company description cannot be empty！");
+            return
+        }
+
+
+        $.ajax({
+            type: "POST", //提交的类型
+            url: "@Url.Action("Update")",//提交地址
+            data: {
+                ID: $("#hfID").val(),
+                CompanyCode: txtCompanyCode,
+                CompanyName: txtCompanyName,
+                CompanyFullName: txtCompanyFullName,
+                SAPCompanyCode: txtSAPCompanyCode,
+                QADCompanyCode: txtQADCompanyCode,
+                CreateTime: $("#hfCreateTime").val(),
+                CreateMachine: $("#hfCreateMachine").val(),
+                CreateUserAccount: $("#hfCreateUserAccount").val()
+            },//参数
+            success: function (msg) { //回调方法
+                if (msg.state == "success") {
+
+                    alert("Update succeeded！");
+
+                    refush();
+
+                } else {
+                    alert("Fail");
+                }
+            }
+        });
+    })
+
+    function refush() {
+      
+    }
+</script>

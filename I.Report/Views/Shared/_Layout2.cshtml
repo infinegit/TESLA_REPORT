@@ -1,0 +1,23 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Trace Report</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    @Scripts.Render("~/Scripts/jquery-1.8.2.min.js")
+    @Scripts.Render("~/Scripts/jquery.validate.min.js")
+    @Scripts.Render("~/Scripts/jquery.metadata.js")
+    @Scripts.Render("~/EasyUI/jquery.easyui.min.js")
+    @Scripts.Render("~/Scripts/global.js")
+    @Styles.Render("~/EasyUI/icon.css")
+    @Styles.Render("~/EasyUI/default/easyui.css")
+    @Styles.Render("~/Content/Site.css")
+</head>
+<body>
+    <noscript>
+        <div style="position: absolute; z-index: 100000; height: 2046px; top: 0px; left: 0px; width: 100%; background: white; text-align: center;">
+            <img src="@Url.Content("~/images/noscript.gif")" alt='Sorry ,Please Start Script Support！' />
+        </div>
+    </noscript>
+    @RenderBody()
+</body>
+</html>

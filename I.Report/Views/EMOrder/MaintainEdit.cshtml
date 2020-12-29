@@ -1,0 +1,92 @@
+﻿@model YFPO.MES.Models.EMS_WorkOrderMaintain
+@{
+    Layout = null;
+}
+<script type="text/javascript">
+    function Update() {
+        $.messager.confirm("提示", "确定提交数据?", function (r) {
+            if (r) {
+                //时间校验
+                var endTime = $("#MaintainEndTime").datetimebox("getValue");
+                if (endTime) {
+                    var startTime = $("#MaintainStartTime").datetimebox("getValue");
+                    if (endTime < startTime) {
+                        $.messager.alert("错误", "维修结束时间不能小于维修开始时间");
+                        return;
+                    }
+                }
+
+                $.post("@Url.Action("MaintainEdit")", $("#MaintainCreate").serialize(), function (data) {
+                    if (data.statue === "success") {
+                        $("#__easydlg").dialog('refresh', '@Url.Action("Maintainer")/?OrderCode=' + '@ViewBag.OrderCode');
+                    } else {
+                        $.messager.alert("错误", "创建失败", "error");
+                    }
+                });
+            }
+        });
+    }
+
+    function Cancel() {
+        $("#__easydlg").dialog('refresh', '@Url.Action("Maintainer")/?OrderCode=' + '@ViewBag.OrderCode');
+    }
+</script>
+<form id="MaintainCreate">
+    <input type="hidden" id="OrderCode" name ="OrderCode" value="@ViewBag.OrderCode"/>
+    <table class="info">
+        <tr>
+            <td class="label">单号
+            </td>
+            <td class="field">
+                @Html.DisplayFor(model => model.OrderCode)
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">维修工
+            </td>
+            <td class="field">
+                <input type="hidden" id="MaintainUser" name="MaintainUser" value="@Model.MaintainUser"/>
+                @Html.DisplayFor(model => model.MaintainUser)
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">维修开始时间
+            </td>
+            <td class="field">
+                <input class="easyui-datetimebox" id="MaintainStartTime" name="MaintainStartTime" 
+                    value="@(Model.MaintainStartTime == null ? "" : Model.MaintainStartTime.Value.ToString("yyyy-MM-dd HH:mm:ss"))" style="width: 150px;" />
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">维修结束时间
+            </td>
+            <td class="field">
+                <input class="easyui-datetimebox" id="MaintainEndTime" name="MaintainEndTime"
+                       value="@(Model.MaintainEndTime == null ? "" : Model.MaintainEndTime.Value.ToString("yyyy-MM-dd HH:mm:ss"))" style="width: 150px;"/>
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">工时(小时)
+            </td>
+            <td class="field">                
+                @Html.EditorFor(model => model.WorkTime)
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="Update()">提交</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="Cancel()">取消</a>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+</form>

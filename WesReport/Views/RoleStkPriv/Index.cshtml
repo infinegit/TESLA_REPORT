@@ -1,0 +1,176 @@
+﻿@model IEnumerable<I.MES.Models.SYS_RoleStkPriv>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<form action="@Url.Action("Index")" method="post" id="indexForm">
+
+    <script type="text/javascript">
+        $(function () {
+
+            $('#role').combobox({
+                url: '@Url.Action("GetRole")',
+                valueField: 'Value',
+                textField: 'Text',
+                onSelect: function (rms) {
+                   
+                    $('#datagrid').datagrid('load', {
+
+                        RoleCode:rms.Value
+                    });
+                }
+
+            });
+
+            $('#datagrid').datagrid({
+                height: 340,
+                url: '@Url.Action("GetRolePriv")',
+                method: 'POST',
+                striped: true,
+                fitColumns: true,
+                singleSelect: true,
+                rownumbers: true,
+                pagination: true,
+                nowrap: false,
+                //toolbar: "toolbar",
+                showFooter: true,
+                queryParams: { RoleCode: "" },
+                toolbar: "toolbar",
+                columns: [[
+                    { field: 'ID', checkbox: true },
+                    { field: 'RoleCode', title: 'Role code', width: 120, align: 'left' },
+                    { field: 'RoleName', title: 'Role name', width: 150, align: 'left' },
+                    { field: 'StkCode', title: 'Location code', width: 100, align: 'left' },
+                    { field: 'StkName', title: 'Location name', width: 100, align: 'left' },
+                    {
+                        field: 'AllowIn', title: '  Whether allow Warehousing', width: 100, align: 'right',
+                        formatter: function(value,row,index){
+                            if (value){
+                                return "是";
+                            } else {
+                                return "否";
+                            }
+                        }  },
+                    {
+                        field: 'AllowOut', title: ' Whether allow Warehouse out', width: 100, align: 'right',
+                        formatter: function(value,row,index){
+                            if (value){
+                                return "是";
+                            } else {
+                                return "否";
+                            }
+                        } },
+                    {
+                        field: 'AllowUpBin', title: ' Whether allow upper shelf', width: 100, align: 'right',
+                        formatter: function(value,row,index){
+                            if (value){
+                                return "是";
+                            } else {
+                                return "否";
+                            }
+                        } },
+                    {
+                        field: 'AllowDownBin', title: 'Whether Allow off the shelf', width: 80, align: 'left',
+                        formatter: function(value,row,index){
+                            if (value){
+                                return "是";
+                            } else {
+                                return "否";
+                            }
+                        }  }
+                       
+                ]]
+            });
+
+            var p = $('#datagrid').datagrid('getPager'); 
+            $(p).pagination({
+               
+                pageNumber:1, //默认显示第几页   
+                pageSize:@ConstInfo.PAGE_SIZE,   
+                beforePageText:'page',  
+                afterPageText:'page     common{pages}page',  
+                displayMsg:'Displaying {from} to {to} of {total} items' 
+            });
+
+            $("#add").click(function (result) {
+                openDlg({
+                    url: "@Url.Action("Create")",
+                    title: "newly build"
+                });
+
+            });
+
+            $("#modify").click(function () {
+
+                var row = $("#datagrid").datagrid('getSelected');
+                if (row == null || row == undefined) {
+                    $.messager.alert("Tips", "No rows are selected！");
+                    return;
+                }
+                openDlg({
+                    url: "@Url.Action("Edit")?id=" + row.ID,
+                    title: "Edit"
+                });
+            });
+
+            $("#delete").click(function () {
+
+                var row = $("#datagrid").datagrid('getSelected');
+                if (row == null || row == undefined) {
+                    $.messager.alert("Tips", "No rows are selected！");
+                    return;
+                }
+
+                $.messager.confirm("Tips", "Are you sure you want to delete this data？", function (r) {
+                    if (r) {
+                        $.post("@Url.Action("Delete")", { id: row.ID }, function (result) {
+                            if (result.state == "success") {
+
+                                $('#datagrid').datagrid('load', {
+
+                                    RoleCode:$('#role').combobox('getValue')
+                                });
+                            }
+                            else {
+                                $.messager.alert("Error", "Deletion failed！", "error");
+                            }
+                        });
+                    }
+                });
+
+            });
+
+        });
+
+        function refush()
+        { 
+            $('#datagrid').datagrid('load', {
+
+                RoleCode:$('#role').combobox('getValue')
+            });
+        }
+    </script>
+    <div id="toolbar" style="width: 100%;">
+        <div style="margin: 10px 0;">
+            <span style="padding: 0 5px;">
+                User role：
+            </span>
+            <span>
+                <input id="role" name="role" style="font-size: 13px;">
+            </span>
+        </div>
+
+        <div>
+            <a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">Add</a>
+            <a id="modify" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">Update</a>
+            <a id="delete" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">Delete</a>
+        </div>
+    </div>
+
+
+    <div>
+        <table id="datagrid" title="信息列表" style="width: 100%; height: auto; border: 1px solid #ccc;">
+        </table>
+    </div>
+</form>

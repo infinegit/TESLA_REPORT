@@ -1,0 +1,111 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Entity.Migrations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DAL
+{
+    /// <summary>
+    /// 条码处理类
+    /// </summary>
+    public class BarcodeOP : BaseOP
+    {
+        public BarcodeOP(string CompanyCode)
+        {
+            CompanyCode = CompanyCode;
+        }
+
+        /// <summary>
+        /// 生成通知单单号
+        /// </summary>
+        /// <param name="companyCode">公司代号</param>
+        /// <param name="userAccount"></param>
+        /// <param name="machineName"></param>
+        /// <returns></returns>
+        public string GenerateNoticeOrderNo(string companyCode, string userAccount, string machineName)
+        {
+            try
+            {
+                var serialNum = GetCurrentSerialNum("IQC" + companyCode, userAccount, machineName);
+                serialNum.CurrentNum++;
+                string rtn = "IQC" + companyCode + serialNum.CurrentNum.ToString("D7");
+                DB.SYS_SerialNum.AddOrUpdate(serialNum);
+                DB.SaveChanges();
+                return rtn;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// 生成工单编号
+        /// 注：EM、PD、CI
+        /// </summary>
+        /// <param name="companyCode">公司代号</param>
+        /// <param name="userAccount">创建人</param>
+        /// <param name="machineName">机器名</param>
+        /// <returns></returns>
+        public string GenerateWorkOrderNo(string companyCode, string userAccount, string machineName)
+        {
+            try
+            {
+                var serialNum = GetCurrentSerialNum("PM" + companyCode, userAccount, machineName);
+                serialNum.CurrentNum++;
+                string rtn = "PM" + companyCode + serialNum.CurrentNum.ToString("D8");
+                DB.SYS_SerialNum.AddOrUpdate(serialNum);
+                DB.SaveChanges();
+                return rtn;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// 取当前前缀的流水号
+        /// </summary>
+        /// <param name="prefix">条码前缀</param>
+        /// <param name="userAccount">操作人</param>
+        /// <param name="machineName">操作时间</param>
+        /// <returns>当前条码前缀对象</returns>
+        private SYS_SerialNum GetCurrentSerialNum(string prefix, string userAccount, string machineName)
+        {
+            try
+            {
+                //int currentNum = 0;
+                //取流水号
+                SYS_SerialNum serialNum = DB.SYS_SerialNum.FirstOrDefault(p => p.Prefix == prefix);
+                //如果取不到返回0,新插入新的流水记录，如果取到，返回当前流水号
+                if (serialNum != null)
+                {
+                    return serialNum;
+                }
+                serialNum = new SYS_SerialNum
+                {
+                    Prefix = prefix,
+                    CurrentNum = 0,
+                    CreateUserAccount = userAccount,
+                    CreateMachine = machineName,
+                    CreateTime = DateTime.Now,
+                    LatestModifyMachine = userAccount,
+                    LatestModifyTime = DateTime.Now,
+                    LatestModifyUserAccount = machineName
+                };
+                DB.SYS_SerialNum.Add(serialNum);
+                DB.SaveChanges();
+                return serialNum;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
+    }
+}

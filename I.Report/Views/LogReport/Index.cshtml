@@ -1,0 +1,168 @@
+﻿@{
+    ViewBag.Title = "日志报表";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="toolbar" style="width: 100%;">
+    <form action="@Url.Action("Index")" method="post" id="indexForm">
+        <table>
+            <tr>
+                <td>Scanning point:</td>
+                <td><input class="easyui-combobox" id="ScanSiteCode" style="width: 200px" /></td>
+                <td>start time:</td>
+                <td>
+                    <input class="easyui-datetimebox" id="startDate" name="startDate" style="width: 200px" />
+                </td>
+                <td>-></td>
+                <td>
+                    <input class="easyui-datetimebox" id="endDate" name="endDate" style="width: 200px" />
+                </td>
+                <td>
+                    <a id="search" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search'">Edit</a>
+                    <a id="btnExport" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-save'" onclick="">Export</a>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+
+<div>
+    <table id="datagrid" title="Error log" style="width: 100%; height: 620px; border: 1px solid #ccc;"></table>
+</div>
+
+
+<script type="text/javascript">
+    $(function () {
+        //chenyi 2018-05-22 PS:添加时间控件的默认时间(datetimebox)
+        var nowDate = new Date();
+        var yesterdayTime = nowDate.setDate(nowDate.getDate() - 1);
+        var yesterday = new Date(yesterdayTime);
+        $('#startDate').datetimebox('setValue', formatDate(yesterday, "yyyy-MM-dd 00:00:00"));//前一天时间
+        $("#endDate").datetimebox("setValue", new Date().toLocaleDateString());//当前时间
+
+        $('#ScanSiteCode').combobox({
+            url: '@Url.Action("GetScanSiteName")',
+            valueField: 'ScanSiteCode',
+            textField: 'ScanSiteName'
+
+        });
+
+
+        $('#datagrid').datagrid();
+
+        $("#Barcode").keydown(function (e) {
+            var keyCode;
+            if (window.event) {
+                keyCode = e.keyCode;
+            } else if (e.which) {
+                keyCode = e.which;
+            }
+            if (keyCode == 13) {
+                $("#indexForm").attr("method", "get");
+                $("#indexForm").submit();
+            }
+        });
+
+        $("#search").click(function () {
+            var strScanSiteCode = $("#ScanSiteCode").combobox('getValue');
+            var startDate = $("#startDate").datetimebox('getValue');
+            var endDate = $("#endDate").datetimebox('getValue');
+            $('#datagrid').datagrid(
+            {
+                url: "@Url.Action("GetErrorLogInfo")",
+                queryParams: {
+                    _ScanSiteCode: strScanSiteCode,
+                    _StartDate: startDate,
+                    _EndDate: endDate,
+                },
+                fitColumns: true,
+                pagination: true,
+                nowrap: false,
+                toolbar: "toolbar",
+                showFooter: true,
+                rownumbers:true,
+                columns: [[
+                //    { field: 'ID', title: 'ID', width: "40px", align: 'center' },
+                    { field: 'FactoryCode', title: 'Factory code', width: "100px", align: 'center' },
+                    { field: 'ProgName', title: 'Program name', width: "100px", align: 'center' },
+                    { field: 'ScanSiteCode', title: 'Scanning point', width: "100px", align: 'center' },
+                    //{ field: 'ActionName', title: '动作名称', width: "100px", align: 'center' },
+                    { field: 'UserAccount', title: 'Operator', width: "100px", align: 'center' },
+                    { field: 'ErrorInfo', title: 'error message', width: "100px", align: 'center' },
+                    {
+                        field: 'ErrorTime', title: 'Error reporting time', width: "160px", align: 'center', formatter: function (date) {
+                            if (date) {
+                                var pa = /.*\((.*)\)/;
+                                var unixtime = date.match(pa)[1].substring(0, 10);
+                                return getTime(unixtime);
+                            } else {
+                                return '2014-11-11 00:00:00';
+                            }
+                        }
+                    },
+                    { field: 'MachineName', title: 'Machine name', width: "100px", align: 'center' },
+                    { field: 'ErrorType', title: 'Error type', width: "100px", align: 'center' }
+                ]]
+            });
+            var p = $('#datagrid').datagrid('getPager');
+            $(p).pagination({
+                pageNumber: 1, //默认显示第几页
+                pageSize: @ConstInfo.PAGE_SIZE,
+                showPageList: false,
+                beforePageText: '第',
+                afterPageText: '页     共{pages}页',
+                displayMsg: 'Displaying {from} to {to} of {total} items'
+            });
+
+        });
+
+    });
+
+    $("#btnExport").click(function () {
+        var strScanSiteCode = $("#ScanSiteCode").combobox('getValue');
+        var startDate = $("#startDate").datetimebox('getValue'); //$("#startDate").val();
+        var endDate = $("#endDate").datetimebox('getValue');
+        var url = "@Url.Action("ExportOut")";
+        $.ajax({
+            type: "POST",//提交类型
+            url: url,//提交地址
+            data: {
+                _ScanSiteCode: strScanSiteCode,
+                _StartDate: startDate,
+                _EndDate: endDate,
+                _Titles: GetTitles()
+            },
+            success: function (msg) {//回调方法
+                //if (msg != null) {
+                //    if (msg != null && msg.Result == "1") {
+                //        $.messager.alert("信息", msg.Message, "info");
+                //        Clear();
+                //    } else
+                //        $.messager.alert("错误", msg.Message, "error");
+                //}
+                window.location.href = msg;
+            },
+            error: function (errorMsg) {
+                var errmsg = errorMsg.responseText;
+                var msg = errmsg.substring(errmsg.indexOf("title") + 6, errmsg.lastIndexOf("title") - 2);
+            }
+        });
+    });
+
+    function refush() {
+        $('#datagrid').datagrid('load');
+
+    }
+
+    function GetTitles() {
+        var parList = [];
+        $($('#datagrid').datagrid("options").columns[0]).each(function (i, o) {
+            if (o.checkbox === undefined || o.checkbox === false) {
+                parList.push({ Key: o.field, Value: o.title, "Operator": "export", "ColumnName": o.field });
+            }
+        });
+        return encodeURIComponent(JSON.stringify(parList));
+    }
+
+</script>

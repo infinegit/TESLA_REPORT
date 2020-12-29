@@ -1,0 +1,199 @@
+﻿@{
+    ViewBag.Title = "Edit";
+}
+
+@model I.Report.DAL.RPT_Role
+@{
+    Layout = null;
+}
+<form action="@Url.Action("Edit")" method="post" id="createForm">
+    @Html.AntiForgeryToken()
+    <table class="info">
+        <tr>
+            <td class="label">
+                Role coding
+            </td>
+            <td class="field" id="RoleCode">
+                @Html.ValueFor(model=>model.RoleCode)
+            </td>
+
+            <td class="tip"></td>
+
+        </tr>
+        <tr>
+            <td class="label">
+                Role name
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.RoleName)
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                Role description
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.RoleDesc)
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                Whether Effective
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.IsActive)
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+
+        <tr>
+            <td colspan="3">
+                        <table style="width: 100%; text-align: center">
+                            <tr>
+
+                                <td>Available menu</td>
+                                <td></td>
+                                <td>Existing menu</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <select size="18" style="width: 150px" name="listLeft" id="listLeft" class="normal">
+                                    </select>
+
+                                </td>
+                                <td>
+                                    <input type="button" id="btnRight" value=">>Add>>" style="font-size: 30px; width: auto" /><br />
+                                    <input type="button" id="btnLeft" value="<<Remove<<" style="font-size: 30px; width: auto" />
+
+                                </td>
+                                <td>
+                                    <select size="18" style="width: 150px" name="listRight" id="listRight" class="normal">
+                                    </select>
+
+                                </td>
+
+                            </tr>
+
+                        </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="SaveDlg();">Submit</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDlg()">Cancel</a>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+    <script>
+        $(function () {
+            GetRole();
+            getUserRole();
+        });
+        function SaveDlg() {
+            var strMenuID = "";
+            $("#listRight option").each(function () {
+                var MenuID = $(this).val();
+                strMenuID += MenuID+";";
+            });
+            var RoleCode = $("#RoleCode").text().trim();
+            var RoleName = $("#RoleName").val();
+            if (RoleCode == "") {
+                $.messager.alert("Tips", "Role code not found！");
+                return;
+            }
+            if (RoleName == "") {
+                $.messager.alert("Tips", "Please fill in the role name！");
+                return;
+            }
+            $.ajax({
+                type: "POST", //提交的类型 
+                url: "@Url.Action("UpdateForm")",//提交地址 
+                dataType: "json",
+                data: {
+                        RoleCode: RoleCode, RoleName: RoleName,
+                        RoleDesc: $("#RoleDesc").val(), IsActive: $("#IsActive").val(),
+                        strMenuID: strMenuID
+                },
+                success: function (msg) { //回调方法 
+                    $.messager.alert("Tips", msg.message);
+                    if (msg.state == "success") {
+                        closeDlg();
+                        refush();
+                    }
+                }
+            });
+        }
+        function GetRole() {
+            var RoleCode = $("#RoleCode").text().trim();
+            $.ajax({
+                type: "POST", //提交的类型 
+                url: "@Url.Action("GetAllMenu")",//提交地址 
+                data: { RoleCode: RoleCode },
+                success: function (msg) { //回调方法 
+                    vlist = "";
+
+                    jQuery.each(msg, function (i, n) {
+                        vlist += "<option value=" + n.Value + ">" + n.Text + "</option>";
+                    })
+
+                    $("#listLeft").empty();
+                    $("#listLeft").append(vlist);
+                }
+            });
+        }
+        function getUserRole() {
+            var RoleCode = $("#RoleCode").text().trim();
+            $.ajax({
+                type: "POST", //提交的类型 
+                url: "@Url.Action("GetExitsMenu")",//提交地址 
+                dataType: "json",
+                data: { RoleCode: RoleCode },
+                success: function (msg) { //回调方法 
+                    vlistRight = "";
+                    vlist = "";
+                    jQuery.each(msg, function (i, n) {
+                        vlistRight += "<option value=" + n.Value + ">" + n.Text + "</option>";
+                    })
+
+                    $("#listRight").empty();
+                    $("#listRight").append(vlistRight);
+                }
+            });
+        }
+        //left move
+        $("#btnRight").click(function () {
+
+            //数据option选中的数据集合赋值给变量vSelect
+            var vSelect = $("#listLeft option:selected");
+            //克隆数据添加到listRight中
+            vSelect.clone().appendTo("#listRight");
+            //同时移除listRight中的option
+            vSelect.remove();
+        });
+        //right move 
+        $("#btnLeft").click(function () {
+            var vSelect = $("#listRight option:selected");
+            vSelect.clone().appendTo("#listLeft");
+            vSelect.remove();
+        });
+        $("#listLeft").dblclick(function () {
+            var vSelect = $("#listLeft option:selected");
+            vSelect.clone().appendTo("#listRight");
+            vSelect.remove();
+        });
+        $("#listRight").dblclick(function () {
+            var vSelect = $("#listRight option:selected");
+            vSelect.clone().appendTo("#listLeft");
+            vSelect.remove();
+        });
+    </script>
+</form>
+
+

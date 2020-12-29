@@ -1,0 +1,137 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Linq.Expressions;
+
+
+namespace DAL
+{
+    public class BaseOP : IDisposable
+    {
+        protected string ConnectStr { get; private set; }
+
+        private string companyCode;
+        public string CompanyCode
+        {
+            get { return companyCode; }
+            set
+            {
+                companyCode = value;
+                ConnectStr = SetConnectStr(value);
+                DB = new IMES3Entities(ConnectStr);
+            }
+        }
+
+        /// <summary>
+        /// 根据工厂获得连接字符串
+        /// </summary>
+        /// <param name="companyCode">工厂ID</param>
+        /// <returns></returns>
+        private static string SetConnectStr(string companyCode)
+        {
+            using (ReportEntities db = new ReportEntities())
+            {
+                var data = db.RPT_Company.FirstOrDefault(p => p.CompanyCode == companyCode);
+                return data == null ? "" : data.ConnectStr;
+            }
+        }
+        /// <summary>
+        /// 数据库上下文
+        /// </summary>
+        public IMES3Entities DB
+        {
+            get;
+            protected set;
+        }
+
+        /// <summary>
+        /// 提交更改至数据库
+        /// </summary>
+        /// <returns></returns>
+        public int SaveChanges()
+        {
+            return DB.SaveChanges();
+        }
+
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        public void Dispose()
+        {
+            DB.Dispose();
+        }
+
+        /// <summary>
+        /// 插入数据
+        /// </summary>
+        /// <typeparam name="TModel">Entity类型</typeparam>
+        /// <param name="model">Entity</param>
+        public virtual void Insert<TModel>(TModel model) where TModel : class
+        {
+            DB.Set<TModel>().Add(model);
+        }
+
+        /// <summary>
+        /// 更新数据
+        /// </summary>
+        /// <typeparam name="TModel">Entity类型</typeparam>
+        /// <param name="model">Entity</param>
+        public virtual void Update<TModel>(TModel model) where TModel : class
+        {
+            if (DB.Entry(model).State == EntityState.Detached)
+            {
+                DB.Set<TModel>().Attach(model);
+                DB.Entry(model).State = EntityState.Modified;
+            }
+        }
+
+        /// <summary>
+        /// 删除数据
+        /// </summary>
+        /// <typeparam name="TModel">Entity类型</typeparam>
+        /// <param name="model">Entity</param>
+        public virtual void Delete<TModel>(TModel model) where TModel : class
+        {
+            DB.Set<TModel>().Remove(model);
+        }
+
+        /// <summary>
+        /// 批量删除
+        /// </summary>
+        /// <typeparam name="TModel">Entity类型</typeparam>
+        /// <param name="filterExpression">条件语句</param>
+        public void Delete<TModel>(Expression<Func<TModel, bool>> filterExpression) where TModel : class
+        {
+            var entities = DB.Set<TModel>();
+            var items = entities.Where(filterExpression);
+            foreach (var item in items)
+            {
+                entities.Remove(item);
+            }
+        }
+
+        /// <summary>
+        /// 获取数据列表
+        /// </summary>
+        /// <typeparam name="TModel">Entity类型</typeparam>
+        /// <param name="filterExpression">条件语句</param>
+        /// <returns>符合条件的数据集合</returns>
+        public virtual IEnumerable<TModel> GetList<TModel>(Expression<Func<TModel, bool>> filterExpression) where TModel : class
+        {
+            return DB.Set<TModel>().Where(filterExpression).ToList();
+        }
+
+        /// <summary>
+        /// 获取单一数据（首行）
+        /// </summary>
+        /// <typeparam name="TModel">Entity类型</typeparam>
+        /// <param name="filterExpression">条件语句</param>
+        /// <returns>符合条件的数据</returns>
+        public virtual TModel GetData<TModel>(Expression<Func<TModel, bool>> filterExpression) where TModel : class
+        {
+            return DB.Set<TModel>().Where(filterExpression).FirstOrDefault();
+        }
+
+    }
+}

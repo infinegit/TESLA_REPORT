@@ -1,0 +1,89 @@
+﻿@{
+    ViewBag.Title = "Modify";
+}
+
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">Role code：</td>
+            <td class="field">
+                <input id="modifyForm_RoleCode" name="modifyForm_RoleCode" class="easyui-combobox" value="@Model.RoleCode" data-options="required:true" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">Scan point code</td>
+            <td class="field">
+                <input id="modifyForm_ScanSiteCode" name="modifyForm_ScanSiteCode" class="easyui-combobox" value="@Model.ScanSiteCode" data-options="required:true" />
+            </td>
+        </tr>
+
+        <tr style="display:none"><td><input id="modifyForm_ID" name="modifyForm_ID" class="easyui-textbox" value="@Model.ID" /></td></tr> 
+    </table>
+    <div style="padding: 15px; text-align: center;">
+        
+        <a href="javascript:void(0)" id="modifyForm_Save" class="easyui-linkbutton" icon="icon-ok">Update</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">Cancel</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(function () {
+        //角色代码
+        $('#modifyForm_RoleCode').combobox({
+            url: '@Url.Action("GetAllRoleList")',
+            valueField: 'RoleCode',
+            textField: 'RoleName'
+        });
+        //扫描点代码
+        $('#modifyForm_ScanSiteCode').combobox({
+            url: '@Url.Action("GetAllScanSiteCodeList")',
+            valueField: 'ScanSiteCode',
+            textField: 'ScanSiteName'
+        });
+    });
+    //提交数据
+    $('#modifyForm_Save').click(function () {
+        var ID = $("#modifyForm_ID").val();
+        var RoleCode = $("#modifyForm_RoleCode").combobox('getValue');
+        var ScanSiteCode = $("#modifyForm_ScanSiteCode").combobox('getValue');
+
+        if (RoleCode == "") {
+            $.messager.alert("Modification failed", "Role code cannot be empty！", "error");
+            return;
+        }
+        if (ScanSiteCode == "") {
+            $.messager.alert("Modification failed", "Scan point code cannot be empty！", "error");
+            return;
+        }
+
+        $.messager.confirm("Tips", "Confirm submission?", function (r) {
+            if (r) {
+                var data =
+                    {
+                        ID: ID,
+                        RoleCode: RoleCode,
+                        ScanSiteCode: ScanSiteCode
+                    };
+                $.post("@Url.Action("ModifyCfg")", data, function (s) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert("Tips", "Modification succeeded！");
+                    } else {
+                        $.messager.alert("Error", result.message, "error");
+                    }
+                });
+            };
+        });
+    });
+
+    function SetRadio(ParamName, ParamValue) {
+        if (ParamValue == "False") {
+            $("input:radio[name='" + ParamName + "'][value='0']").attr('checked', 'true');
+        }
+        else {
+            $("input:radio[name='" + ParamName + "'][value='1']").attr('checked', 'true');
+        }
+    }
+</script>

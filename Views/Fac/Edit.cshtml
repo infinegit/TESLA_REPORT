@@ -1,0 +1,54 @@
+﻿@model I.Report.DAL.RPT_Company
+@{
+    Layout = null;
+}
+<form action="@Url.Action("Edit")" method="post" id="editForm">
+    @Html.AntiForgeryToken()
+	    <table class="info">
+        <tr>
+            <td class="label">
+                Factory number
+            </td>
+        <td class="field">
+            @Html.EditorFor(model => model.CompanyCode)
+        </td>
+        <td class="tip"></td>
+		</tr>
+        <tr>
+            <td class="label">
+                Name of factory
+            </td>
+        <td class="field">
+            @Html.EditorFor(model => model.CompanyName)
+        </td>
+        <td class="tip"></td>
+		</tr>
+        <tr>
+            <td class="label">
+                Factory address
+            </td>
+        <td class="field">
+            @Html.EditorFor(model => model.CompanyAddress)
+        </td>
+        <td class="tip"></td>
+		</tr>
+        <tr>
+            <td class="label">
+                Connection string
+            </td>
+        <td class="field">
+            <input type="text" id="ConnectStr" name="ConnectStr" style="width:200px;" value="@Html.DisplayFor(modelItem => modelItem.ConnectStr)" />
+        </td>
+        <td class="tip"></td>
+		</tr>
+        
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitDlg('editForm')">Submit</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDlg()">Cancel</a>
+            </td><td></td>
+        </tr>
+</table>
+</form>
+

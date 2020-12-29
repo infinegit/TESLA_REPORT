@@ -1,0 +1,356 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+<form action="@Url.Action("Index")" method="post" id="indexForm">
+    <script type="text/javascript">
+        $(function () {
+            init();//初始化
+            //物流路径
+            $('#cboShipRoute').combobox({
+                url: '@Url.Action("GetFirstShippingRoute")',
+                editable: false, //不可编辑状态
+                cache: false,
+                panelHeight: '150',//自动高度适合
+                valueField: 'Value',
+                textField: 'Key',
+                required: true
+            });
+            $('#cboShipRoute').combobox('select', "0");
+            //添加
+            $("#add").click(function (result) {
+                if ($(this).linkbutton('options').disabled == false) {
+                    if ($("[name='cboShipRoute']").val() == "") {
+                        $.messager.alert("信息", "请选择物流路径！", "error");
+                        return;
+                    }
+                    if ($("[name='txtCarNo']").val() == "") {
+                        $.messager.alert("信息", "请输入车号！", "error");
+                        return;
+                    }
+                    if ($("[name='txtCreateTime']").val() == "") {
+                        $.messager.alert("信息", "请输入创建时间！", "error");
+                        return;
+                    }
+                    if ($("[name='txtEffTime']").val() == "") {
+                        $.messager.alert("信息", "请输入用车时间！", "error");
+                        return;
+                    }
+                }
+                var cmzData =
+                           {
+                               CMZCode: "",
+                               RouteCode: $("[name='cboShipRoute']").val(),
+                               CarPlateNo: $("[name='txtCarNo']").val(),
+                               CarDriver: $("[name='txtDriver']").val(),
+                               EffTime: $("[name='txtEffTime']").val(),
+                               PkgCount: $("[name='txtPackageCount']").val() == "" ?
+                                   0 : $("[name='txtPackageCount']").val(),
+                               CreateTime: $("[name='txtCreateTime']").val(),
+                               Memo: $("[name='txtmeo']").val()
+
+                           };
+                var req = new Object();
+                req["cmzString"] = JSON.stringify(cmzData);
+                var cmzDetdata = $('#datagrid').datagrid('getData');
+                var rows = $('#datagrid').datagrid('getRows');
+                var partNos = "";
+                if (rows.length > 0) {
+                    for (var i = 0; i < rows.length; i++) {
+                        var partNo = rows[i]["PartNo"];
+
+                        partNos += rows[i]["PartNo"] + ",";
+                        if (partNos.split(partNo).length > 2) {
+
+                            $.messager.alert("信息", "一个申请单中不能包含两个相同的零件号！");
+                            return;
+                        }
+
+                    }
+                    var cmzDetString = JSON.stringify(cmzDetdata);
+                    req["cmzDetString"] = cmzDetString;
+                    var url = "@Url.Action("AddAFC")";
+                    $.post(url, req, function (result) {
+
+                        if (result.state == "error" || result.state == "") {
+                            $.messager.alert("提示", "操作失败！");
+                        }
+                        else {
+
+
+                            $.messager.alert("提示", "操作成功！");
+
+                            successrefresh();
+                        }
+
+                    });
+                }
+                else {
+                    var cmzDetString = JSON.stringify(cmzDetdata);
+                    req["cmzDetString"] = cmzDetString;
+                    partNo = "";
+                    var url = "@Url.Action("AddAFC")";
+                    $.post(url, req, function (result) {
+
+                        if (result.state == "error" || result.state == "") {
+                            $.messager.alert("提示", "操作失败！");
+                        }
+                        else {
+
+
+                            $.messager.alert("提示", "操作成功！");
+
+                            successrefresh();
+                        }
+
+                    });
+                }
+            });
+            //重置
+            $("#reset").click(function () {
+                reset();
+            });
+
+
+        });
+
+
+
+
+
+        //初始化页面
+        function init() {
+
+            $("#add").linkbutton("enable");
+            $("#txtEffTime").textbox('setValue', dateformatter(new Date()));
+            $("#txtCreateTime").textbox('setValue', dateformatter(new Date()));
+        }
+
+
+        //重置
+        function reset() {
+            $("#cboShipRoute").textbox('setValue', '');
+            $("#txtPackageCount").textbox('setValue', '');
+            $("#txtEffTime").textbox('setValue', dateformatter(new Date()));
+            $("#txtCreateTime").textbox('setValue', dateformatter(new Date()));
+            $("#txtCarNo").textbox('setValue', '');
+            $("#txtDriver").textbox('setValue', '');
+            $("#txtmeo").textbox('setValue', '');
+            $('#datagrid').datagrid('loadData', { total: 0, rows: [] });
+            init();
+        }
+        //操作成功后刷新
+        function successrefresh() {
+
+            $("#txtPackageCount").textbox('setValue', '');
+            $("#txtControcrt").textbox('setValue', '');
+            $("#txtLetterNo").textbox('setValue', '');
+            $("#txtEffTime").textbox('setValue', dateformatter(new Date()));
+            $("#txtCreateTime").textbox('setValue', dateformatter(new Date()));
+            $("#txtCarNo").textbox('setValue', '');
+            $("#txtDriver").textbox('setValue', '');
+            $("#txtmeo").textbox('setValue', '');
+            $('#datagrid').datagrid('loadData', { total: 0, rows: [] });
+        }
+        function formatterDate(date) {
+            var day = date.getDate() > 9 ? date.getDate() : "0" + date.getDate();
+            var month = (date.getMonth() + 1) > 9 ? (date.getMonth() + 1) : "0"
+            + (date.getMonth() + 1);
+
+            return date.getFullYear() + '-' + month + '-' + day + ' ' + date.toLocaleTimeString();
+        }
+
+    </script>
+    <div class="easyui-layout" style="height: auto;">
+        <table>
+            <tr>
+                <td><a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">创建</a>
+
+                    <a id="reset" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-cancel'">重置</a></td>
+            </tr>
+            <tr>
+                <td>物流路径</td>
+                <td colspan="7">
+                    <input class="easyui-combobox" id="cboShipRoute" name="cboShipRoute" style="width: 580px" data-options="required:true" />
+                </td>
+            </tr>
+            <tr>
+                <td>车号
+                </td>
+                <td>
+                    <input class="easyui-textbox" id="txtCarNo" name="txtCarNo" style="width: 150px" data-options="required:true" />
+                </td>
+                <td>司机
+                </td>
+                <td>
+                    <input class="easyui-textbox" id="txtDriver" name="txtDriver" style="width: 150px" />
+                </td>
+                <td>申请人
+                </td>
+                <td>
+                    <input class="easyui-textbox" id="txtControcrt" name="txtControcrt" style="width: 150px" />
+                </td>
+                <td>箱数
+                </td>
+                <td>
+                    <input class="easyui-numberbox" id="txtPackageCount" name="txtPackageCount" style="width: 150px" />
+                </td>
+
+            </tr>
+            <tr>
+                <td>用车日期
+                </td>
+                <td>
+                    <input class="easyui-datebox" id="txtEffTime" name="txtEffTime" style="width: 150px" data-options="required:true" />
+                </td>
+                <td>申请日期
+                </td>
+
+                <td>
+                    <input class="easyui-datebox" id="txtCreateTime" name="txtCreateTime" style="width: 150px" data-options="required:true" />
+                </td>
+                <td>备注</td>
+                <td>
+                    <input class="easyui-textbox" id="txtmeo" name="txtmeo" style="width: 150px" />
+                </td>
+                <td>费用来源</td>
+                <td>
+                    <input class="easyui-textbox" id="txtLetterNo" name="txtLetterNo" style="width: 150px" />
+                </td>
+
+
+            </tr>
+        </table>
+
+        <div>
+            <table id="datagrid" class="easyui-datagrid" title="明细"
+                data-options="
+				    iconCls: 'icon-edit',
+				    singleSelect: true,
+				    toolbar: '#tb',
+				    onClickCell: onClickCell,
+                    onEndEdit:onEndEdit">
+                <thead>
+                    <tr>
+                        <th data-options="field:'PartNo',width:150,align:'center',editor:{type:'text',options:{required:true}}">零件号</th>
+                        <th data-options="field:'Desc',width:200,align:'center'">描述</th>
+                        <th data-options="field:'Qty',width:100,editor:{type:'numberbox',options:{precision:0,required:true}}">汇总数量</th>
+                    </tr>
+                </thead>
+            </table>
+
+            <div id="tb" style="height: auto">
+                <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick=" append() ">新增行</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick=" removeit() ">删除行</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save',plain:true" onclick=" accept() ">接收编辑</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-undo',plain:true" onclick=" reject() ">重置编辑</a>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+
+        //新增行
+        function append() {
+            if (endEditing()) {
+                $('#datagrid').datagrid('appendRow', {});
+                editIndex = $('#datagrid').datagrid('getRows').length - 1;
+                $('#datagrid').datagrid('selectRow', editIndex)
+                    .datagrid('beginEdit', editIndex);
+            }
+        }
+        //删除行
+        function removeit() {
+            if (editIndex == undefined) {
+                return
+            }
+            $('#datagrid').datagrid('cancelEdit', editIndex)
+                .datagrid('deleteRow', editIndex);
+            editIndex = undefined;
+        }
+
+        function accept() {
+            if (endEditing()) {
+                $('#datagrid').datagrid('acceptChanges');
+            }
+        }
+
+        function reject() {
+            $('#datagrid').datagrid('rejectChanges');
+            editIndex = undefined;
+        }
+        $.extend($.fn.datagrid.methods, {
+            editCell: function (jq, param) {
+                return jq.each(function () {
+                    var opts = $(this).datagrid('options');
+                    var fields = $(this).datagrid('getColumnFields', true).concat($(this).datagrid('getColumnFields'));
+                    for (var i = 0; i < fields.length; i++) {
+                        var col = $(this).datagrid('getColumnOption', fields[i]);
+                        col.editor1 = col.editor;
+                        if (fields[i] != param.field) {
+                            col.editor = null;
+                        }
+                    }
+                    $(this).datagrid('beginEdit', param.index);
+                    for (var i = 0; i < fields.length; i++) {
+                        var col = $(this).datagrid('getColumnOption', fields[i]);
+                        col.editor = col.editor1;
+                    }
+                });
+            }
+        });
+        var editIndex = undefined;
+
+        function endEditing() {
+            if (editIndex == undefined) {
+                return true
+            }
+            if ($('#datagrid').datagrid('validateRow', editIndex)) {
+                $('#datagrid').datagrid('endEdit', editIndex);
+                editIndex = undefined;
+                return true;
+            } else {
+                return false;
+            }
+        }
+        function onClickCell(index, field) {
+            if (endEditing()) {
+                $('#datagrid').datagrid('selectRow', index).datagrid('editCell', { index: index, field: field });
+                editIndex = index;
+            }
+        }
+
+        function onEndEdit(rowIndex, rowData, changes) {
+
+            var partNo = rowData["PartNo"];
+            if(partNo == null || partNo == "")
+            {
+                $.messager.alert("错误", "零件号不能为空！！");
+                return;
+            }
+            if (partNo != null && partNo != "") {
+                $.ajax({
+                    url: "@Url.Action("IsExistPartNo")",
+                    type: "POST",
+                    async: false,
+                    data: { "PartNo": partNo },
+                    dataType: 'json',
+                    success: function (result) {
+                        if (result == null) {
+                            rowData["PartNo"] = "";
+                            $.messager.alert("错误", "MES零件号不存在");
+                        } else {
+                            rowData["Desc"] = result.Description;
+                        }
+                    }
+                });
+
+
+
+            } else {
+                $.messager.alert("信息", "发运不能为空！");
+                return;
+            }
+        }
+    </script>
+</form>

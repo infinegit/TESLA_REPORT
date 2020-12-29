@@ -1,0 +1,692 @@
+﻿@{
+    ViewBag.Title = "Index";
+     
+}
+<META http-equiv=Content-Type content="text/html; charset=utf-8">
+<style type="text/css">
+    td {
+        padding: 5px;
+    }
+</style>
+<script src="~/Scripts/PrintCMZ.js" charset="utf-8"></script>
+<!--打印插件-->
+<object id="LODOP_OB" classid="clsid:2105C259-1E0C-4534-8141-A753534CB4CA" width="0" height="0">
+    <embed id="LODOP_EM" type="application/x-print-lodop" width="0" height="0"></embed>
+</object>
+<!--打印end-->
+<form action="@Url.Action("Index")" method="post" id="indexForm">
+    <script type="text/javascript" charset="utf-8">
+        function rowOrderformater(value, row, index) {
+            return "<a href=\"javascript:void(0);\" onclick=\"ClorseOrder('" + row.Value + "')\"><font color='blue'>打印</font></a>";
+
+        }
+        function ClorseOrder(OrderNo) {
+            if (OrderNo == "") {
+                $.messager.alert("提示", "订单无效！");
+                return;
+            }
+            $.post("@Url.Action("PrintDelivery")", { "OrderNo": OrderNo }, function (res) {
+                if (res.Result == "1") {
+
+                    Print.URL(res.Data);
+                } else {
+                    $.messager.alert("错误", "操作失败！" + res.Message, "error");
+                }
+            });
+        }
+        $(function () {
+            init();//初始化
+            $("#add").click(function (result) {
+                if ($(this).linkbutton('options').disabled == false) {
+                    if ($("[name='cboShipRoute']").val() == "") {
+                        $.messager.alert("信息", "请选择物流路径！", "error");
+                        return;
+                    }
+                    if ($("[name='txtCarNo']").val() == "") {
+                        $.messager.alert("信息", "请输入车号！", "error");
+                        return;
+                    }
+                    //if ($("[name='txtDriver']").val() == "") {
+                    //    $.messager.alert("信息", "请输入司机！", "error");
+                    //    return;
+                    //}
+                    //if ($("[name='txtControcrt']").val() == "") {
+                    //    $.messager.alert("信息", "请输入联系人！", "error");
+                    //    return;
+                    //}
+                    if ($("[name='txtEffTime']").val() == "") {
+                        $.messager.alert("信息", "请输入生效时间！", "error");
+                        return;
+                    }
+                    var outDetdata = $('#dgstkoutInfo').datagrid('getChecked');
+                    var outDetString = JSON.stringify(outDetdata);
+                    if (state == 0 && cmzDetdata.Rows.length == 0) {
+
+                        $.messager.alert("错误", "请加载完成之后创建出门证");
+                        return;
+                    }
+                    else {
+                        var cmzData =
+                               {
+                                   CMZCode: "",
+                                   RouteCode: $("[name='cboShipRoute']").val(),
+                                   ContactInfo: $("[name='txtControcrt']").val(),
+                                   CarPlateNo: $("[name='txtCarNo']").val(),
+                                   CarDriver: $("[name='txtDriver']").val(),
+                                   EffTime: $("[name='txtEffTime']").val(),
+                                   PkgCount: $("[name='txtPackageCount']").val() == "" ?
+                                       0 : $("[name='txtPackageCount']").val(),
+                                   LetterNo: $("[name='txtLetterNo']").val(),
+                                   Memo: $("[name='txtMemo']").val()
+
+                               };
+                        var req = new Object();
+                        req["cmzString"] = JSON.stringify(cmzData);
+                        var orderdata = $('#dgOrder').datagrid('getChecked');
+                        var orderString = JSON.stringify(orderdata);
+                        if (orderString == "[]") {
+                            $.messager.alert("信息", "请选择订单！", "error");
+                            return;
+                        }
+                        req["orderString"] = orderString;
+                       
+                        req["outDetString"] = outDetString;
+                        var cmzDetdata = $('#dgsumInfo').datagrid('getData');
+                        var cmzDetString = JSON.stringify(cmzDetdata);
+                        req["cmzDetString"] = cmzDetString;
+                        var url = "@Url.Action("AddCMZ")";
+                    $.post(url, req, function (result) {
+                        if (result.state == "error") {
+                            $.messager.alert("提示", result.message);
+                        }
+                        else if (result.state == "") {
+                            $.messager.alert("提示", "操作失败！");
+                        }
+                        else {
+                            //$("#add").linkbutton("disable");
+                            // $("#print").linkbutton("enable");
+                            $("#txtCMZNo").textbox('setValue', result.state);
+                            $.messager.alert("提示", "操作成功！");
+                           
+                            autoprint(result.state);
+                            successrefresh();
+                            state =0;
+
+                        }
+
+                    });
+                }
+                }
+            });
+
+            $("#close").click(function (result) {
+                $.messager.confirm("提示", "确定关闭?", function (r) {
+                    if (r) {
+                        if ($("#close").linkbutton('options').disabled == false) {
+                            var req = new Object();
+                            var orderdata = $('#dgOrder').datagrid('getChecked');
+                            var orderString = JSON.stringify(orderdata);
+                            if (orderString == "[]") {
+                                $.messager.alert("信息", "请选择订单！", "error");
+                                return;
+                            }
+                            req["orderString"] = orderString;
+                            var url = "@Url.Action("CloseOrder")";
+                            $.post(url, req, function (result) {
+                                if (result.state != "") {
+                                    $.messager.alert("提示", result.state);
+                                }
+                                else {
+                                    $.messager.alert("提示", "操作成功！");
+                                    param = String($('#cboOrderType').combobox('getValues'));
+                                    var routeCode = $("[name='cboShipRoute']").val();
+                                    resetOrderDataGrid('@Url.Action("GetCMZOrderListByCmzType")', { param: param, routeCode: routeCode });
+                                    $('#dgstkoutInfo').datagrid('loadData', { total: 0, rows: [] });
+                                    $('#dgsumInfo').datagrid('loadData', { total: 0, rows: [] });
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+
+            $("#reset").click(function () {
+                reset();
+            });
+            $("#tbtnclear").click(function () {
+                $("#txtOrderNo").textbox('setValue', '');
+            });
+            //查询
+            $("#btnSearch").click(function () {
+                routeCode = $("[name='cboShipRoute']").val()
+                if (routeCode == "") {
+                    $.messager.alert("信息", "请选择物流路径！", "info");
+                    return;
+                }
+                else {
+                    param = String($('#cboOrderType').combobox('getValues'));
+                    resetOrderDataGrid('@Url.Action("GetCMZOrderListByCmzType")', { param: param, routeCode: routeCode });
+                    $('#dgstkoutInfo').datagrid('loadData', { total: 0, rows: [] });
+                    $('#dgsumInfo').datagrid('loadData', { total: 0, rows: [] });
+                }
+
+            });
+            //物流路径
+            $('#cboShipRoute').combobox({
+                url: '@Url.Action("GetShippingRouteList")',
+                editable: false, //不可编辑状态
+                cache: false,
+                panelHeight: '150',//自动高度适合
+                valueField: 'Value',
+                textField: 'Key',
+                required: true,
+                onLoadSuccess: function () {
+                    $.ajax({
+                        type: "POST",//提交类型
+                        url: '@Url.Action("GetFirstShippingRoute")',
+                        dataType: "json",
+                        success: function (result) {
+                            if (result != "") {
+                                $("#cboShipRoute").combobox('setValue', result);
+                            }
+                        }
+                    })
+                }
+            });
+            //出门证订单类型
+            $('#cboOrderType').combobox({
+                url: '@Url.Action("GetCMZOrderTypeList")',
+                editable: false, //不可编辑状态
+                cache: false,
+                panelHeight: '150',//自动高度适合
+                valueField: 'Value',
+                textField: 'Key',
+                multiple: true,
+                required: true
+
+            });
+            $('#dgOrder').datagrid({
+                method: 'POST',
+                striped: true,
+                fitColumns: true,
+                singleSelect: false,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                columns: [[
+                 { field: 'Key', checkbox: true },
+                 { field: 'Value', title: '订单号', width: '100px', align: 'left' }
+
+                ]]
+            });
+
+            $('#dgstkoutInfo').datagrid({
+                method: 'POST',
+                striped: true,
+                fitColumns: true,
+                singleSelect: false,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                columns: [[
+
+                    { field: 'ID', checkbox: true },
+                    { field: 'PackageTypeCode', title: '包装类型编码', width: 40, align: 'left', hidden: true },
+                    { field: 'PartNo', title: '零件号', width: 80, align: 'left' },
+                    { field: 'CustomerPartNo', title: '客户零件号', width: 80, align: 'left' },
+                    { field: 'Barcode', title: '条码', width: 80, align: 'left' },
+                    { field: 'PartDesc', title: '零件描述', width: 140, align: 'left' },
+                    { field: 'PackageTypeName', title: '包装', width: 40, align: 'left' },
+                    { field: 'Qty', title: '可出数量', width: 40, align: 'left' },
+                    { field: 'LeaveQty', editor: { type: 'numberbox', options: { precision: 3 } }, title: '出门数量', width: 40, align: 'left' }
+
+                ]]
+            });
+            var state = 0;
+            $('#dgsumInfo').datagrid({
+                method: 'POST',
+                striped: true,
+                fitColumns: true,
+                singleSelect: true,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                columns: [[
+                    { field: 'PartNO', title: '零件号', width: 120, align: 'left' },
+                    { field: 'CustPartNo', title: '客户零件号', width: 80, align: 'left' },
+                    { field: 'PartDesc', title: '零件描述', width: 140, align: 'left' },
+                    { field: 'Qty', title: '汇总数量', width: 80, align: 'left' }
+                ]],
+                onLoadSuccess: function () {
+                    state = 1;
+                }
+            });
+        })
+        function resetOrderDataGrid(url, data) {
+            $('#dgOrder').datagrid({
+                url: url,
+                queryParams: data,
+                method: 'POST',
+                striped: true,
+                fitColumns: true,
+                singleSelect: false,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                columns: [[
+                 { field: 'Key', checkbox: true },
+                 { field: 'Value', title: '订单号', width: 120, align: 'left' }
+                ]],
+                onClickRow: checkOrder,
+                onCheck: checkOrder,
+                onUncheck: checkOrder,
+                onCheckAll: checkOrder,
+                onUncheckAll: checkOrder
+                //onClickRow: function (index, data) {
+                //    var ids = [];
+                //    var rows = $('#dgOrder').datagrid('getChecked');
+                //    var res = JSON.stringify(rows);
+                //    loaddgstkoutInfo(res);
+                //}
+
+            });
+        }
+        function checkOrder() {
+            var ids = [];
+            var rows = $('#dgOrder').datagrid('getChecked');
+            var res = JSON.stringify(rows);
+           // res = new String(res.getBytes(), "UTF-8");
+            loaddgstkoutInfo(res);
+        }
+        function loaddgstkoutInfo(orderNo) {
+            var req = new Object();
+            req["orderNo"] = orderNo;
+            $('#dgstkoutInfo').datagrid({
+                url: '@Url.Action("GetCanLeaveStkOutDet")',
+                method: 'POST',
+                queryParams: req,
+                striped: true,
+                fitColumns: true,
+                singleSelect: false,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                onClickCell: onClickCell,
+                columns: [[
+                    { field: 'ID', checkbox: true },
+                       { field: 'PackageTypeCode', title: '包装类型编码', width: 40, align: 'left', hidden: true },
+                     { field: 'PartNo', title: '零件号', width: 80, align: 'left' },
+                      { field: 'CustomerPartNo', title: '客户零件号', width: 80, align: 'left' },
+                    { field: 'Barcode', title: '条码', width: 80, align: 'left' },
+                    { field: 'PartDesc', title: '零件描述', width: 140, align: 'left' },
+                    { field: 'PackageTypeName', title: '包装', width: 40, align: 'left' },
+                    { field: 'Qty', title: '可出数量', width: 40, align: 'left' },
+                    { field: 'LeaveQty', editor: { type: 'numberbox', options: { precision: 3 } }, title: '出门数量', width: 40, align: 'left' }
+                ]],
+                onLoadSuccess: function () {
+                    $('#dgstkoutInfo').datagrid('selectAll');
+                    var selRows = $('#dgstkoutInfo').datagrid('getChecked');
+                    var res = JSON.stringify(selRows);
+                    loaddgsumInfo(res);
+                },
+                onClickRow: checkDets,
+                onCheck: checkDets,
+                onUncheck: checkDets
+            });
+        }
+        function checkDets() {
+            var selRows = $('#dgstkoutInfo').datagrid('getChecked');
+            var res = JSON.stringify(selRows);
+            loaddgsumInfo(res);
+        }
+        $.extend($.fn.datagrid.methods, {
+            editCell: function (jq, param) {
+                return jq.each(function () {
+                    var opts = $(this).datagrid('options');
+                    var fields = $(this).datagrid('getColumnFields', true).concat($(this).datagrid('getColumnFields'));
+                    for (var i = 0; i < fields.length; i++) {
+                        var col = $(this).datagrid('getColumnOption', fields[i]);
+                        col.editor1 = col.editor;
+                        if (fields[i] != param.field) {
+                            col.editor = null;
+                        }
+                    }
+                    $(this).datagrid('beginEdit', param.index);
+                    for (var i = 0; i < fields.length; i++) {
+                        var col = $(this).datagrid('getColumnOption', fields[i]);
+                        col.editor = col.editor1;
+                    }
+                });
+            }
+        });
+
+        var editIndex = undefined;
+        function endEditing() {
+            if (editIndex == undefined) { return true }
+            if ($('#dgstkoutInfo').datagrid('validateRow', editIndex)) {
+                $('#dgstkoutInfo').datagrid('endEdit', editIndex);
+                var qty = $('#dgstkoutInfo').datagrid('getRows')[editIndex]['Qty'];
+                var leaveQty = $('#dgstkoutInfo').datagrid('getRows')[editIndex]['LeaveQty'];
+                if (leaveQty > qty) {
+
+                    $.messager.alert("信息", "出门数量不能大于已发运的数量！", "error");
+                    $('#dgstkoutInfo').datagrid('endEdit', editIndex).datagrid('refreshRow', editIndex).datagrid('selectRow', editIndex).datagrid(
+                                'beginEdit', editIndex);
+                }
+                if (leaveQty < 0) {
+                    $.messager.alert("信息", "出门数量必须大于0", "error");
+                    $('#dgstkoutInfo').datagrid('endEdit', editIndex).datagrid('refreshRow', editIndex).datagrid('selectRow', editIndex).datagrid(
+                                'beginEdit', editIndex);
+                }
+                editIndex = undefined;
+                return true;
+            } else {
+                return false;
+            }
+        }
+        function onClickCell(index, field) {
+            if (endEditing()) {
+                $('#dgstkoutInfo').datagrid('selectRow', index).datagrid('editCell', { index: index, field: field });
+                editIndex = index;
+            }
+
+        }
+        function loaddgsumInfo(data) {
+            var req = new Object();
+            req["dets"] = data;
+            $('#dgsumInfo').datagrid({
+                url: '@Url.Action("CalcTotal")',
+                method: 'POST',
+                queryParams: req,
+                dataType: 'json',//请求数据类型
+                striped: true,
+                fitColumns: true,
+                singleSelect: false,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                columns: [[
+                    { field: 'PartNO', title: '零件号', width: 120, align: 'left' },
+                    { field: 'CustPartNo', title: '客户零件号', width: 120, align: 'left' },
+                    { field: 'PartDesc', title: '零件描述', width: 140, align: 'left' },
+                    { field: 'Qty', title: '汇总数量', width: 80, align: 'left' }
+                ]]
+            });
+        }
+
+        //重置
+        function reset() {
+            //$("#cboShipRoute").textbox('setValue', '');
+            $("#txtCMZNo").textbox('setValue', '');
+            $("#txtPackageCount").textbox('setValue', '');
+            $("#txtEffTime").textbox('setValue', dateformatter(new Date()));
+            $("#txtCarNo").textbox('setValue', '');
+            $("#txtDriver").textbox('setValue', '');
+            $("#txtControcrt").textbox('setValue', '');
+            $("#cboOrderType").textbox('setValue', '');
+            $("#txtOrderNo").textbox('setValue', '');
+            $("#txtLetterNo").text('setValue', '');
+            $("#txtMemo").text('setValue', '');
+            $('#dgOrder').datagrid('loadData', { total: 0, rows: [] });
+            $('#dgstkoutInfo').datagrid('loadData', { total: 0, rows: [] });
+            $('#dgsumInfo').datagrid('loadData', { total: 0, rows: [] });
+            init();
+        }
+        //操作成功后刷新
+        function successrefresh() {
+            // $("#cboShipRoute").textbox('setValue', '');
+            $("#txtPackageCount").textbox('setValue', '');
+            $("#txtEffTime").textbox('setValue', dateformatter(new Date()));
+            $("#txtCarNo").textbox('setValue', '');
+            $("#txtDriver").textbox('setValue', '');
+            $("#txtControcrt").textbox('setValue', '');
+            $("#txtOrderNo").textbox('setValue', '');
+            $("#txtLetterNo").textbox('setValue', '');
+            $("#txtMemo").textbox('setValue', '');
+            param = String($('#cboOrderType').combobox('getValues'));
+            resetOrderDataGrid('@Url.Action("GetCMZOrderListByCmzType")', { param: param });
+            $('#dgstkoutInfo').datagrid('loadData', { total: 0, rows: [] });
+            $('#dgsumInfo').datagrid('loadData', { total: 0, rows: [] });
+        }
+        //自动打印
+        function autoprint(cmzNo) {
+            $.ajax({
+                type: "POST",//提交类型
+                url: '@Url.Action("GetPrintData")?cmzCode=' + cmzNo,
+                dataType: "json",
+                success: function (result) {
+                    createPrintPage(result.cmzMstr, result.cmzDets);
+                }
+            });
+
+        }
+        //订单扫描
+        function doSearch() {
+            var orderNo = $("#txtOrderNo ").val();//获取订单号
+            var cmzType = $("[name='cboOrderType']").val();
+            if (orderNo != "" && cmzType != "") {
+
+                $.ajax({
+                    type: "POST",//提交类型
+                    url: '@Url.Action("CheckOrderNo")?orderNo=' + orderNo, //检查订单
+                    dataType: "json",
+                    success: function (result) {
+                        if (result != null) {
+                            if (result.state == "") {
+                                $.messager.alert("信息", "订单无效！", "error");
+                            }
+                            else {
+                                var req = new Object();
+                                var orderData = $('#dgOrder').datagrid('getData');
+                                var orderString = JSON.stringify(orderData);
+                                req["orderNo"] = orderNo;
+                                req["cmzType"] = result.state;
+                                req["oriData"] = orderString;
+                                resetOrderDataGrid('@Url.Action("ScanOrderNo")', req);//获取订单对应数据
+                                $("#txtOrderNo").textbox('setValue', '');
+
+                                $.ajax({
+                                    type: "POST",//提交类型
+                                    url: '@Url.Action("GetShipRoteByOrderNo")?cmzType=' + cmzType + ' &&orderNo=' + orderNo,
+                                    dataType: "json",
+                                    success: function (result) {
+                                        $("#cboShipRoute").combobox('setValue', result.Message);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                })
+            } else {
+                $.messager.alert("信息", "订单类型和订单号不能为空！");
+            }
+        };
+
+        $(function () {
+            $("#mulSearch").click(function () {
+                var orderNo = $("#mulOrderNo ").val();//获取订单号
+                var routeCode = $("[name='cboShipRoute']").val();
+                if ($("[name='cboShipRoute']").val() == "") {
+                    $.messager.alert("信息", "请选择物流路径！", "error");
+                    return;
+                }
+                if (orderNo != "") {
+                    resetOrderDataGrid('@Url.Action("GetOrderNoList")', { orderNo: orderNo, routeCode: routeCode });//获取订单对应数据
+                    $.messager.alert("信息", "扫描成功,请选择！");
+                } else {
+                    $.messager.alert("信息", "订单类型和订单号不能为空！");
+                }
+                $("#mulOrderNo ").val("");
+            });
+        });
+
+        //初始化页面
+        function init() {
+            $("#txtCMZNo").textbox("disable");
+            // $("#print").linkbutton("disable");
+            $("#add").linkbutton("enable");
+            $("#txtEffTime").textbox('setValue', dateformatter(new Date()));
+
+            //加载车号信息
+            $('#txtCarNo').combobox({
+                url: '@Url.Action("GetAllCarInfo")',
+                valueField: 'CarNo',
+                textField: 'CarNo',
+                onChange: function () {
+                    var data = { carNo: $(this).combobox('getValue') };
+                    var carNo = $(this).val();
+                    $.post("@Url.Action("GetCarInfoByCarNo")", data, function (result) {
+                        if (result.state === "success")
+                        {
+                            $('#txtDriver').textbox('setValue', result.data.Driver);
+                            $('#txtControcrt').textbox('setValue', result.data.Contact);
+                        }
+                        else
+                        {
+                            $('#txtDriver').textbox('setValue', "");
+                            $('#txtControcrt').textbox('setValue', "");
+                        }
+                    });
+                }
+            });
+        }
+        function formatterDate(date) {
+            var day = date.getDate() > 9 ? date.getDate() : "0" + date.getDate();
+            var month = (date.getMonth() + 1) > 9 ? (date.getMonth() + 1) : "0"
+            + (date.getMonth() + 1);
+
+            return date.getFullYear() + '-' + month + '-' + day + ' ' + date.toLocaleTimeString();
+        }
+
+    </script>
+    <div class="easyui-layout" style="height: 550px;">
+        <div data-options="region:'north'" style="height: 140px">
+            <div class="easyui-panel">
+                <a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">创建</a>
+                <a id="close" href="#" style="margin-left: 30px;" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-cut'">关闭</a>
+                <a id="reset" href="#" style="margin-left: 30px;" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-cancel'">重置</a>
+            </div>
+            <table>
+                <tr>
+                    <td>物流路径</td>
+                    <td colspan="7">
+                        <input class="easyui-combobox" id="cboShipRoute" name="cboShipRoute" style="width: 580px" data-options="required:true" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>证书编号
+                    </td>
+                    <td>
+                        <input class="easyui-textbox" id="txtCMZNo" name="txtCMZNo" style="width: 150px" />
+                    </td>
+
+                    <td>箱数
+                    </td>
+                    <td>
+                        <input class="easyui-numberbox" id="txtPackageCount" name="txtPackageCount" style="width: 150px" />
+                    </td>
+                    <td>生效时间
+                    </td>
+                    <td>
+                        <input class="easyui-datebox" id="txtEffTime" name="txtEffTime" style="width: 150px" data-options="required:true" />
+                    </td>
+                    <td>介绍信编号</td>
+                    <td>
+                        <input class="easyui-textbox" id="txtLetterNo" name="txtLetterNo" style="width: 150px" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>车号
+                    </td>
+                    <td>
+                        <input class="easyui-combobox" id="txtCarNo" name="txtCarNo" style="width: 150px" data-options="required:true" />
+                    </td>
+                    <td>司机
+                    </td>
+                    <td>
+                        <input class="easyui-textbox" id="txtDriver" name="txtDriver" style="width: 150px" />
+                    </td>
+                    <td>联系方式
+                    </td>
+                    <td>
+                        <input class="easyui-textbox" id="txtControcrt" name="txtControcrt" style="width: 150px" />
+                    </td>
+                    <td>备注</td>
+                    <td>
+                        <input class="easyui-textbox" id="txtMemo" name="txtMemo" style="width: 150px" />
+                    </td>
+
+                </tr>
+            </table>
+        </div>
+        <div data-options="region:'center'">
+            <div class="easyui-layout" style="height: 390px;">
+                <div data-options="region:'north'" style="height: 50px; border: 0px">
+                    <table style="border-bottom: 0px">
+                        <tr>
+                            <td>订单类型</td>
+                            <td>
+                                <input class="easyui-combobox" id="cboOrderType" name="cboOrderType" style="width: 180px" />
+                            </td>
+                            <td>
+                                <a href="#" id="btnSearch" class="easyui-linkbutton" data-options="iconCls:'icon-search'">查询</a>
+                            </td>
+                            <td>扫描订单</td>
+                            <td>
+                                <input class="easyui-searchbox" id="txtOrderNo" name="txtOrderNo" data-options="searcher:doSearch" style="width: 280px" />
+                            </td>
+                            <td>
+                                <a id="tbtnclear" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-clear'">清空</a>
+                            </td>
+                            <td>
+                                <a href="#" id="openDlg" class="easyui-linkbutton" data-options="iconCls:'icon-search'" onclick="$('#dlg').dialog('open')">扫描多个订单</a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="dlg" class="easyui-dialog" title="扫描多个订单" data-options="iconCls:'icon-save',closed: true,modal: true,closable: false" style="width: 320px; height: 250px;">
+                    <table cellpadding="5" style="height: 100%;">
+                        <tr>
+                            <td colspan="2">
+                                <textarea cols="50" id="mulOrderNo" rows="10"></textarea>
+                                @*<input class="easyui-textbox" id="mulOrderNo" data-options="multiline:true" value="" style="width:280px;height:150px">*@
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center">
+                                <a href="javascript:void(0)" class="easyui-linkbutton" id="mulSearch" data-options="iconCls:'icon-save'" onclick="$('#dlg').dialog('close')">确认</a>
+                            </td>
+                            <td align="center">
+                                <a href="javascript:void(0)" class="easyui-linkbutton" id="dlgClose" data-options="iconCls:'icon-cancel'" onclick="$('#dlg').dialog('close')">关闭</a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div data-options="region:'west'" style="width: 300px; border-bottom: 0px; border-left: 0px">
+                    <table class="easyui-datagrid" id="dgOrder" title="订单信息" data-options="singleSelect:true" style="border: 0px"></table>
+                </div>
+                <div data-options="region:'center'" style="height: auto; border-bottom: 0px">
+                    <div class="easyui-layout" style="height: 340px;">
+                        <div data-options="region:'north'" style="height: 180px; border: 0px">
+                            <table class="easyui-datagrid" id="dgstkoutInfo" title="可开出门证零件信息"
+                                data-options="singleSelect:true" style="border: 0px; height: 100%">
+                            </table>
+                        </div>
+                        <div data-options="region:'center'" style="border: 0px">
+                            <table class="easyui-datagrid" id="dgsumInfo" title="汇总信息"
+                                data-options="singleSelect:true" style="border: 0px">
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</form>

@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9A371662-4912-490E-9016-52E6A65CD551}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DAL</RootNamespace>
+    <AssemblyName>DAL</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.5.0.0\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.Entity" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Mvc, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="YFPO.MES.ClientLib">
+      <HintPath>..\..\..\YFPO.MES\YFPO.MES.ClientLib\bin\Debug\YFPO.MES.ClientLib.dll</HintPath>
+    </Reference>
+    <Reference Include="YFPO.MES.Models">
+      <HintPath>..\..\..\YFPO.MES\YFPO.MES.Models\bin\Debug\YFPO.MES.Models.dll</HintPath>
+    </Reference>
+    <Reference Include="YFPO.MES.Tools">
+      <HintPath>..\..\..\YFPO.MES\YFPO.MES.Tools\bin\Debug\YFPO.MES.Tools.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BarcodeOP.cs.ok" />
+    <None Include="BaseOP.cs.del" />
+    <None Include="CMZOP.cs.ok" />
+    <None Include="COGIOP.cs.ok" />
+    <None Include="ComPanyOP.cs.ok" />
+    <None Include="EMOrderOP.cs.ok" />
+    <None Include="ManualSaleOP.cs.ok" />
+    <Compile Include="RptCompanyOP.cs" />
+    <None Include="IPQCOrderOP.cs.ok" />
+    <None Include="PDOrderOP.cs.ok" />
+    <None Include="RoleStkPrivOP.cs.ok" />
+    <Compile Include="RPT_Company.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_Fac_User_Map.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_Menu.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RPT_User.cs">
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <None Include="SelectListItemOP.cs.ok" />
+    <None Include="SpecialPickingOutOp.cs.ok" />
+    <None Include="SYS_RoleStkPrivViewModel.cs.ok" />
+    <None Include="TransOP.cs.ok" />
+    <None Include="UpBinRequestOP.cs.ok" />
+    <Compile Include="UserOP.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Report.Context.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Report.Context.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Report.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Report.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Report.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Report.edmx</DependentUpon>
+    </Compile>
+    <None Include="UserRoleOP.cs.ok" />
+    <Compile Include="MenuOP.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.Config">
+      <SubType>Designer</SubType>
+    </None>
+    <EntityDeploy Include="Report.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>Report.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+    <None Include="packages.config" />
+    <None Include="Report.Context.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>Report.edmx</DependentUpon>
+      <LastGenOutput>Report.Context.cs</LastGenOutput>
+    </None>
+    <None Include="Report.edmx.diagram">
+      <DependentUpon>Report.edmx</DependentUpon>
+    </None>
+    <None Include="Report.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>Report.edmx</DependentUpon>
+      <LastGenOutput>Report.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\YFPO.Report.Config\YFPO.Report.Config.csproj">
+      <Project>{bcce7560-290d-48e1-924e-992ad9b62a02}</Project>
+      <Name>YFPO.Report.Config</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

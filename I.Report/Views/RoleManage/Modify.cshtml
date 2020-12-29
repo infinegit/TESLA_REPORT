@@ -1,0 +1,171 @@
+﻿@{
+    ViewBag.Title = "Modify";
+}
+@using Resources
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">@Html.Label(Resource.Role_number)</td>
+            <td class="field">
+                <input id="modifyForm_RoleCode" name="modifyForm_RoleCode" class="easyui-textbox" data-options="required:true" disabled="disabled" value="@Model.RoleCode"/>
+            </td>
+
+            <td class="label">@Html.Label(Resource.Role_name)</td>
+            <td class="field">
+                <input id="modifyForm_RoleName" name="modifyForm_RoleName" class="easyui-textbox" value="@Model.RoleName" />
+            </td>
+
+            <td class="label">@Html.Label(Resource.Role_description)</td>
+            <td class="field">
+                <input id="modifyForm_RoleDesc" name="modifyForm_RoleDesc" class="easyui-textbox" value="@Model.RoleDesc" />
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="6">
+                <table style="width: 100%; text-align: center">
+                    <tr>
+                        <td style="font-size: 24px;">@Html.Label(Resource.Available_menu) </td>
+                        <td></td>
+                        <td style="font-size: 24px;">@Html.Label(Resource.Existing_menu) </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <select size="18" style="width: 150px; height:220px;" name="modifyForm_listLeft" id="modifyForm_listLeft" class="normal"></select>
+                        </td>
+                        <td>
+                            <button type="button" id="modifyForm_btnRight" style="font-size: 30px; width: 200px;text-align:center">→@Html.Label(Resource.Add)→</button><br />
+                            <button type="button" id="modifyForm_btnLeft" style="font-size: 30px; width: 200px;text-align:center">←@Html.Label(Resource.Remove)←</button>
+                        </td>
+                        <td>
+                            <select size="18" style="width: 150px; height:220px;" name="modifyForm_listRight" id="modifyForm_listRight" class="normal"></select>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div style="padding: 5px; text-align: center;">
+        <a href="javascript:void(0)" id="modifyForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Modify) </a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel) </a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    //页面加载事件
+    $(function () {
+        //下载左右菜单列表
+        GetLeftMenu();
+        GetRightMenu();
+    })
+
+    //添加→
+    $("#modifyForm_btnRight").click(function () {
+        //数据option选中的数据集合赋值给变量vSelect
+        var vSelect = $("#modifyForm_listLeft option:selected");
+        //克隆数据添加到modifyForm_listRight中
+        vSelect.clone().appendTo("#modifyForm_listRight");
+        //同时移除modifyForm_listLeft中的option
+        vSelect.remove();
+    });
+    //移除←
+    $("#modifyForm_btnLeft").click(function () {
+        var vSelect = $("#modifyForm_listRight option:selected");
+        vSelect.clone().appendTo("#modifyForm_listLeft");
+        vSelect.remove();
+    });
+    //左边菜单双击事件
+    $("#modifyForm_listLeft").dblclick(function () {
+        var vSelect = $("#modifyForm_listLeft option:selected");
+        vSelect.clone().appendTo("#modifyForm_listRight");
+        vSelect.remove();
+    });
+    //右边菜单双击事件
+    $("#modifyForm_listRight").dblclick(function () {
+        var vSelect = $("#modifyForm_listRight option:selected");
+        vSelect.clone().appendTo("#modifyForm_listLeft");
+        vSelect.remove();
+    });
+
+    //获取左边菜单
+    function GetLeftMenu() {
+        $.ajax({
+            type: "POST",
+            data: { RoleCode: "@Model.RoleCode" },
+            url: "@Url.Action("GetLeftMenu")",
+            success: function (data) {
+                vlist = "";
+                //循环赋值
+                jQuery.each(data, function (i, n) {
+                    vlist += "<option value=" + n.Value + ">" + n.Text + "</option>";
+                })
+                //先清除左边菜单列表
+                $("#modifyForm_listLeft").empty();
+                //显示菜单列表
+                $("#modifyForm_listLeft").append(vlist);
+            }
+        });
+    }
+
+    //获取右边菜单列表
+    function GetRightMenu() {
+        $.ajax({
+            type: "POST", //提交的类型
+            url: "@Url.Action("GetRightMenu")",//提交地址
+            dataType: "json",
+            data: { RoleCode: "@Model.RoleCode" },
+            success: function (msg) { //回调方法
+                vlistRight = "";
+                vlist = "";
+                jQuery.each(msg, function (i, n) {
+                    vlistRight += "<option value=" + n.Value + ">" + n.Text + "</option>";
+                })
+
+                $("#modifyForm_listRight").empty();
+                $("#modifyForm_listRight").append(vlistRight);
+            }
+        });
+    }
+
+
+
+    //提交数据
+    $('#modifyForm_Save').click(function () {
+        var strPrivCode = "";
+        $("#modifyForm_listRight option").each(function () {
+            var PrivCode = $(this).val();
+            strPrivCode += PrivCode + ";";
+        });
+        var RoleCode = $("#modifyForm_RoleCode").val();
+        var RoleName = $("#modifyForm_RoleName").val();
+        var RoleDesc = $("#modifyForm_RoleDesc").val();
+
+        if (RoleCode == "") {
+            $.messager.alert('@Html.Label(Resource.Tips)', '@Html.Label(Resource.Please_fill_in_the_role_number)');
+            return;
+        }
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("ModifyCfg")",
+            dataType: "json",
+            data: {
+                RoleCode: RoleCode,
+                RoleName: RoleName,
+                RoleDesc: RoleDesc,
+                strPrivCode: strPrivCode
+            },
+            success: function (result) {
+                if (result.state === "success") {
+                    closeDlg();
+                    datagrid();
+                    $.messager.alert('@Html.Label(Resource.Tips)', '@Html.Label(Resource.Modification_succeeded)');
+                } else {
+                    $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                }
+
+            }
+        });
+    });
+</script>

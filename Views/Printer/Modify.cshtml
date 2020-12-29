@@ -1,0 +1,85 @@
+﻿@{
+    ViewBag.Title = "Modify";
+}
+
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">Printer number</td>
+            <td class="field">
+                <input id="modifyForm_PrinterCode" name="modifyForm_PrinterCode" class="easyui-textbox" data-options="required:true" value="@Model.PrinterCode" disabled="disabled" />
+            </td>
+
+            <td class="label">Printer name</td>
+            <td class="field">
+                <input id="modifyForm_PrinterName" name="modifyForm_PrinterName" class="easyui-textbox" value="@Model.PrinterName" />
+            </td>
+        </tr>
+
+        <tr> 
+            <td class="label">Computer name</td>
+            <td class="field">
+                <input id="modifyForm_PrinterServer" name="modifyForm_PrinterServer" class="easyui-textbox" value="@Model.PrinterServer" />
+            </td>
+
+            <td class="label">Print description</td>
+            <td class="field">
+                <input id="modifyForm_PrinterDesc" name="modifyForm_PrinterDesc" class="easyui-textbox" value="@Model.PrinterDesc" />
+            </td>
+        </tr>
+
+        <tr> 
+            <td class="label">Print location</td>
+            <td class="field">
+                <input id="modifyForm_PrinterLocation" name="modifyForm_PrinterLocation" class="easyui-textbox" value="@Model.PrinterLocation" />
+            </td>
+        </tr>
+
+        <tr style="display:none"><td><input id="modifyForm_ID" name="modifyForm_ID" class="easyui-textbox" value="@Model.ID" /></td></tr>   
+    </table>
+    <div style="padding: 5px; text-align: center;">
+        
+        <a href="javascript:void(0)" id="modifyForm_Save" class="easyui-linkbutton" icon="icon-ok">Update</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">Cancel</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    //提交数据
+    $('#modifyForm_Save').click(function () {
+        var ID = $("#modifyForm_ID").val();
+        var PrinterCode = $("#modifyForm_PrinterCode").val();
+        var PrinterServer = $("#modifyForm_PrinterServer").val();
+        var PrinterName = $("#modifyForm_PrinterName").val();
+        var PrinterDesc = $("#modifyForm_PrinterDesc").val();
+        var PrinterLocation = $("#modifyForm_PrinterLocation").val();
+
+        if (PrinterCode == "") {
+            $.messager.alert("Modification failed", "Printer number cannot be empty！", "error");
+            return;
+        }
+
+        $.messager.confirm("Tips", "Confirm submission?", function (r) {
+            if (r) {
+                var data =
+                    {
+                        ID: ID,
+                        PrinterCode: PrinterCode,
+                        PrinterServer: PrinterServer,
+                        PrinterName: PrinterName,
+                        PrinterDesc: PrinterDesc,
+                        PrinterLocation: PrinterLocation
+                    };
+                $.post("@Url.Action("ModifyCfg")", data, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert("Tips", "Modification succeeded！");
+                    } else {
+                        $.messager.alert("Error", result.message, "error");
+                    }
+                });
+            };
+        });
+    });
+</script>

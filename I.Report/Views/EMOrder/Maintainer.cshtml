@@ -1,0 +1,128 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "维修工时";
+}
+
+<script type="text/javascript">
+    $(function () {
+        $("#MaintainGird").datagrid({
+            url: "@Url.Action("GetMaintainList")?OrderCode=" + $("#emOrderCode").val(),
+            striped: true,
+            fitColumns: true,
+            singleSelect: true,
+            rownumbers: true,
+            pagination: true,
+            nowrap: false,
+            toolbar: "toolbar",
+            //pageList: [10, 20, 50, 100, 150, 200],
+            showFooter: true,
+            //queryParams: { txtSearch: $("#txtSearch").val() },
+            columns: [
+                [
+                    { field: 'ID', checkbox: true },
+                { field: 'OrderCode', title: '工单', width: 70, align: 'left' },
+                { field: 'MaintainUser', title: '工号', width: 70, align: 'left', hidden: 'true' },
+                    { field: 'MaintainUserName', title: '维修工', width: 50, align: 'left' },
+                    {
+                        field: 'MaintainStartTime',
+                        title: '维修开始时间',
+                        formatter: function (date) {
+                            if (date) {
+                                var pa = /.*\((.*)\)/;
+                                var unixtime = date.match(pa)[1].substring(0, 10);
+                                return getTime(unixtime);
+                            } else {
+                                return '--';
+                            }
+                        },
+                        width: 100,
+                        align: 'center'
+                    },
+                    {
+                        field: 'MaintainEndTime',
+                        title: '维修结束时间',
+                        formatter: function (date) {
+                            if (date) {
+                                var pa = /.*\((.*)\)/;
+                                var unixtime = date.match(pa)[1].substring(0, 10);
+                                return getTime(unixtime);
+                            } else {
+                                return '--';
+                            }
+                        },
+                        width: 100,
+                        align: 'center'
+                    },
+                 { field: 'WorkTime', title: '工时(小时)', width: 70, align: 'left' }
+                ]
+            ]
+        });
+
+        var p = $("#MaintainGird").datagrid("getPager");
+        $(p).pagination({
+            pageNumber: 1,
+            pageSize: '@ConstInfo.PAGE_SIZE',
+            showPageList: false,
+            beforePageText: '第',
+            afterPageText: '页 共{pages}页',
+            displayMsg: 'Displaying {from} to {to} of {total} items'
+        });
+        //添加维修工
+        $("#addMaintain").click(function () {
+            $("#__easydlg").dialog('refresh', '@Url.Action("MaintainCreate")/?OrderCode=' + '@ViewBag.OrderCode');
+        });
+        //修改维修工
+        $("#modifyMaintain").click(function () {
+            var row = $("#MaintainGird").datagrid('getSelected');
+            if (row == null || row == undefined) {
+                $.messager.alert("错误", "未选中任何行！");
+                return;
+            }
+            $("#__easydlg").dialog('refresh', '@Url.Action("MaintainEdit")/?orderCode=' + '@ViewBag.OrderCode' + '&userAccount=' + row.MaintainUser);
+        });
+
+
+        $("#delete").click(function () {
+            var rows = $("#MaintainGird").datagrid('getSelected');
+            if (rows == null) {
+                $.messager.alert("提示", "未选中任何行！");
+                return;
+            }
+
+            $.messager.confirm("提示", "您确定要删除选中项吗？", function (r) {
+                if (r) {
+                    $.post("@Url.Action("Delete")", { orderCode: rows.OrderCode, userAccount: rows.MaintainUser }, function (result) {
+                        if (result.state == "success") {
+                            $('#MaintainGird').datagrid('load');
+
+                            $.messager.alert("提示", "删除成功");
+
+                        } else {
+                            //$.messager.alert("错误", "删除失败！" + res.Message, "error");
+                            $.messager.alert("错误", "删除失败！", "error");
+                        }
+                    })
+                };
+            });
+        });
+
+
+    });
+</script>
+<div id="MainDiv">
+    <div id="toolbar" style="width: 100%;">
+
+        <div>
+            <a id="addMaintain" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">新增</a>
+            <a id="modifyMaintain" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">修改</a>
+            <a id="delete" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">删除</a>
+        </div>
+        <input type="hidden" id="emOrderCode" name ="emOrderCode" value="@ViewBag.OrderCode"/>
+    </div>
+
+    <div>
+        <table id="MaintainGird" title="维修工列表" style="width: 100%; height: auto; border: 1px solid #CCC">
+        </table>
+    </div>
+</div>
+

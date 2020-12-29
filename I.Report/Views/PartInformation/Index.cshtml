@@ -1,0 +1,126 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+@Scripts.Render("~/EasyUI/datagrid-detailview.js")
+@using Resources
+<div>
+    <table id="divSearch">
+        <tr>
+
+            @* <td>产品大类：</td>
+                <td>
+                    <input class="easyui-combobox" id="produceCategory" />
+                </td>
+                <td>零件层级：</td>
+                <td>
+                    <input class="easyui-combobox" id="produceLevel" />
+                </td>*@
+            <td>@Html.Label(Resource.PartNo)</td>
+            <td>
+                <input class="easyui-textbox" id="partNo" />
+            </td>
+            @* <td>子零件号：</td>
+                <td>
+                    <input class="easyui-textbox" id="compPartNo" />
+                </td>*@
+            <td>
+                <a id="btnSearch" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'" onclick="">@Html.Label(Resource.Select)</a>
+                <a id="btnRefresh" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="refush()">@Html.Label(Resource.Refresh) </a>
+        </tr>
+    </table>
+</div>
+
+<div class="easyui-panel" id="toolbar" style="width:1500px">
+    <a id="add" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">@Html.Label(Resource.Add)</a>
+    <a id="modify" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">@Html.Label(Resource.Edit)</a>
+    <a id="delete" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">@Html.Label(Resource.Delete)</a>
+</div>
+<table id="datagrid" class="easyui-datagrid" style="height:100%;" toolbar="#toolbar" title='@Html.Label(Resource.PartInfo)'  data-options="singleSelect:true"></table>
+
+<script type="text/javascript">
+    $(function () {
+        datagrid();
+    });
+
+    //点击【查询】按钮
+    $("#btnSearch").click(function () {
+        datagrid();
+    });
+    //数据绑定
+    function datagrid() {
+        Datagrid.ViewName = "MFG_Part";
+        Datagrid.SortColumn = "VehicleMode,PartNo";
+        Datagrid.SortDirection = "ASC";
+        Datagrid.Columns = [[
+                    { field: 'ID', title: 'No', width: '50px', align: 'center', hidden: "true" },
+                    { field: 'VehicleMode', title: '@Html.Label(Resource.VehicleMode)', width: '90px', align: 'center' },
+                    { field: 'ProjectName', title: '@Html.Label(Resource.ProjectName) ', width: '90px', align: 'center' },
+                    { field: 'PartNo', title: '@Html.Label(Resource.PartNo) ', width: '100px', align: 'center' },
+                    { field: 'PartDescription', title: '@Html.Label(Resource.Partial_description) ', width: '180px', align: 'center' },
+                    { field: 'MeterialDescrition', title: '@Html.Label(Resource.MeterialDescrition) ', width: '130px', align: 'center' },
+                    { field: 'PartLevel', title: '@Html.Label(Resource.PartLevel) ', width: '100px', align: 'center' },
+                    { field: 'CreateUser', title: '@Html.Label(Resource.Create_user)  ', width: '80px', align: 'center' },
+                    { field: 'CreateTime', title: '@Html.Label(Resource.CreateTime) ', width: '140px', align: 'center' },
+                    { field: 'CreateMachine', title: '@Html.Label(Resource.CreateMachine) ', width: '85px', align: 'center' },
+                    { field: 'ModifyUser', title: '@Html.Label(Resource.Modify_user) ', width: '70px', align: 'center' },
+                    { field: 'ModifyTime', title: '@Html.Label(Resource.Modification_time)', width: '140px', align: 'center' },
+                    { field: 'ModifyMachine', title: '@Html.Label(Resource.ModifyMachine) ', width: '86px', align: 'center' }
+        ]];
+        Datagrid.Pagination = false;
+        Datagrid.URL = ("@Url.Action("GetReportData", "Report/Report")");
+        Datagrid.Search("#divSearch");
+    }
+
+    //刷新页面
+    function refush() {
+        document.location.reload();
+    }
+
+    //新增
+    $("#add").click(function () {
+        openDlg({
+            url: "@Url.Action("Add")",
+            title: '@Html.Label(Resource.Add_PartInfo)',
+                width: "800px",
+                height: "400px"
+            });
+    });
+
+    //修改
+    $("#modify").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Please_select_the_data_to_modify)');
+            return;
+        }
+        openDlg({
+            url: "@Url.Action("Modify")?ID=" + row.ID,
+            title:'@Html.Label(Resource.Edit_PartInfo)',
+                width: "800px",
+                height: "400px"
+            });
+    });
+
+    //删除
+    $("#delete").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Please_select_the_information_to_delete)');
+            return;
+        }
+        $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_sure_you_want_to_delete_this_data)', function (r) {
+            if (r) {
+                $.post("@Url.Action("DeletePartByID")", { ID: row.ID }, function (result) {
+                    if (result.state == "success") {
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Deletion_succeeded)');
+                    }
+                    else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                    }
+                });
+            }
+        });
+    });
+</script>

@@ -1,0 +1,137 @@
+﻿@{
+    ViewBag.Title = "Modify";
+}
+@using Resources
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">@Html.Label(Resource.PartNo):</td>
+            <td class="field">
+                <input id="editForm_PartNo" name="editForm_PartNo" class="easyui-textbox" data-options="required:true" value="@Model.PartNo" readonly="true" />
+            </td>
+
+            <td class="label">@Html.Label(Resource.MeterialDescrition):</td>
+            <td class="field">
+                <input id="editForm_MeterialDescrition" name="editForm_MeterialDescrition" class="easyui-textbox" data-options="required:true" value="@Model.MeterialDescrition" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.VehicleMode):</td>
+            <td class="field">
+                <input id="editForm_VehicleMode" name="editForm_VehicleMode" class="easyui-combobox" value="@Model.VehicleMode" />
+            </td>
+
+            <td class="label">@Html.Label(Resource.ProjectName):</td>
+            <td class="field">
+                <input id="editForm_ProjectName" name="editForm_ProjectName" class="easyui-textbox" data-options="required:true" value="@Model.ProjectName" />
+            </td>
+
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.PartLevel):</td>
+            <td class="field">
+                <input id="editForm_PartLevel" name="editForm_PartLevel" class="easyui-textbox" data-options="required:true" value="@Model.PartLevel" />
+            </td>
+            <td class="label">@Html.Label(Resource.Partial_description):</td>
+            <td class="field">
+                <input id="editForm_PartDescription" name="editForm_PartDescription" class="easyui-textbox" data-options="required:true" value="@Model.PartDescription" />
+            </td>
+        </tr>
+
+        <tr style="display:none"><td><input id="modifyForm_ID" name="modifyForm_ID" class="easyui-textbox" value="@Model.ID" /></td></tr>
+    </table>
+    <div style="padding: 15px; text-align: center;">
+
+        <a href="javascript:void(0)" id="modifyForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Edit)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(function () {
+
+        //车型
+        $('#editForm_VehicleMode').combobox({
+            url: '@Url.Action("GetAllVehicleModeList")',
+            valueField: 'VehicleMode',
+            textField: 'VehicleName'
+        });
+
+    });
+
+    function SetRadio(ParamName, ParamValue) {
+        //if (ParamValue == "False") {
+        //    $("input:radio[name='" + ParamName + "'][value='0']").attr('checked', 'true');
+        //}
+        //else {
+        //    $("input:radio[name='" + ParamName + "'][value='1']").attr('checked', 'true');
+        //}
+    }
+
+    //提交数据
+    $('#modifyForm_Save').click(function () {
+        var ID = $("#modifyForm_ID").val();
+        var PartNo = $("#editForm_PartNo").val();
+        //  var PartVersion = $("#addForm_PartVersion").combobox('getValues')[0];
+        var MeterialDescrition = $("#editForm_MeterialDescrition").val();
+
+
+        var ProjectName = $("#editForm_ProjectName").val();
+
+        var PartLevel = $("#editForm_PartLevel").val();
+
+        var VehicleMode = $("#editForm_VehicleMode").combobox('getValues')[0];
+
+        var PartDescription = $("#editForm_PartDescription").val();
+
+
+        if (PartNo == "") {
+            $.messager.alert('@Html.Label(Resource.Edit_failure)','@Html.Label(Resource.The_PartNo_cannot_be_empty)');
+            return;
+        }
+        if (MeterialDescrition == "") {
+            $.messager.alert('@Html.Label(Resource.Edit_failure)','@Html.Label(Resource.The_Material_cannot_be_empty)');
+            return;
+        }
+        if (ProjectName == "") {
+            $.messager.alert('@Html.Label(Resource.Edit_failure)','@Html.Label(Resource.The_ProjectName_cannot_be_empty)');
+            return;
+        }
+        if (PartLevel == "") {
+            $.messager.alert('@Html.Label(Resource.Edit_failure)','@Html.Label(Resource.The_PartLevel_cannot_be_empty)');
+            return;
+        }
+        if (PartDescription == "") {
+            $.messager.alert('@Html.Label(Resource.Edit_failure)','@Html.Label(Resource.The_PartDescription_cannot_be_empty)');
+            return;
+        }
+
+        $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_Sure_to_submit)', function (r) {
+            if (r) {
+                var req = new Object();
+                var data =
+                    {
+                        ID:ID,
+                        PartNo: PartNo,
+                        MeterialDescrition: MeterialDescrition,
+                        ProjectName: ProjectName,
+                        PartLevel: PartLevel,
+                        VehicleMode: VehicleMode,
+                        PartDescription: PartDescription
+                    };
+                req["part"] = JSON.stringify(data);
+                $.post("@Url.Action("ModifyPart")", req, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.info)', '@Html.Label(Resource.Update_Success)');
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                    }
+                });
+            };
+        });
+    });
+</script>

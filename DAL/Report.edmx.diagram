@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="607ee2e6f3a9428ab20c4fa17c9b507d" Name="关系图1" ZoomLevel="52">
+        <EntityTypeShape EntityType="REPORTModel.RPT_Fac_User_Map" Width="1.5" PointX="2.625" PointY="0.5" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_Menu" Width="1.5" PointX="8.125" PointY="2.25" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_User" Width="1.5" PointX="11.125" PointY="3.75" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_Company" Width="1.5" PointX="5.125" PointY="1.875" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

@@ -1,0 +1,85 @@
+﻿@{
+    ViewBag.Title = "Add";
+}
+@using Resources
+<form>
+    <table class="info" style="width:280px">
+        <tr>
+            <td class="label">@Html.Label(Resource.User_account)</td>
+            <td class="field">
+                <input id="addForm_UserAccount" name="addForm_UserAccount" class="easyui-textbox" data-options="required:true" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.User_password) </td>
+            <td class="field">
+                <input id="addForm_Password" name="addForm_Password" class="easyui-textbox" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.User_name)</td>
+            <td class="field">
+                <input id="addForm_UserName" name="addForm_UserName" class="easyui-textbox" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.Job_number)</td>
+            <td class="field">
+                <input id="addForm_UserWorkID" name="addForm_UserWorkID" class="easyui-textbox" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.Whether_activation)</td>
+            <td class="field">
+                @Html.Label(Resource.NG)<input type="radio" name="addForm_IsActive" value="0" />&nbsp;&nbsp;&nbsp;&nbsp;
+                @Html.Label(Resource.OK)<input type="radio" name="addForm_IsActive" value="1" checked="checked" />
+            </td>
+        </tr>
+    </table>
+    <div style="padding: 5px; text-align: center;">
+        <a href="javascript:void(0)" id="addForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Add)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    //提交数据
+    $('#addForm_Save').click(function () {
+        var UserAccount = $("#addForm_UserAccount").val();
+        var UserName = $("#addForm_UserName").val();
+        var UserWorkID = $("#addForm_UserWorkID").val();
+        var Password = $("#addForm_Password").val();
+        var IsActive = $('input[name="addForm_IsActive"]:checked').val();
+
+        if (UserAccount == "") {
+            $.messager.alert('@Html.Label(Resource.Add_failure)','@Html.Label(Resource.User_account_cannot_be_empty) ');
+            return;
+        }
+
+        $.messager.confirm('@Html.Label(Resource.Tips)','@Html.Label(Resource.Confirm_submission)', function (r) {
+            if (r) {
+                var data =
+                    {
+                        UserAccount: UserAccount,
+                        UserName: UserName,
+                        UserWorkID: UserWorkID,
+                        Password: Password,
+                        IsActive: IsActive
+                    };
+                $.post("@Url.Action("AddCfg")", data, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.Tips)', '@Html.Label(Resource.Add_Success)');
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message, '@Html.Label(Resource.Error)');
+                    }
+                });
+            };
+        });
+    });
+</script>

@@ -1,0 +1,69 @@
+﻿@model I.MES.Models.MFG_VehicleMode
+@{
+    Layout = null;
+}
+@using Resources
+
+<script type="text/javascript">
+    function refresh() {
+        $('#datagrid').datagrid();
+    }
+    function validate() {
+        var isValid = true;
+        var errMessage = "";
+        if ($("#VehicleMode").val() == "") {
+            errMessage += "Model code cannot be empty!\n";
+            isValid = false;
+        }
+        if ($("#VehicleName").val() == "") {
+            errMessage += "Model name cannot be empty!\n";
+            isValid = false;
+        }
+
+
+
+        if (errMessage != "") {
+            alert(errMessage);
+        }
+        return isValid;
+    }
+
+</script>
+<form action="@Url.Action("Edit")" method="post" id="editForm">
+    @Html.AntiForgeryToken()
+    <table class="info">
+        <tr>
+            <td class="label">
+                @Html.Label(Resource.Model_code)
+            </td>
+            <td class="field">
+                @Html.DisplayFor(model => model.VehicleMode)
+                @Html.HiddenFor(model => model.CreateMachine)
+                @Html.HiddenFor(model => model.CreateTime)
+                @*@Html.HiddenFor(model => model.CreateUserAccount)*@
+                @Html.HiddenFor(model => model.VehicleMode)
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                @Html.Label(Resource.Model_name)     
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.VehicleName)
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitDlgWithValidate('editForm')">  @Html.Label(Resource.Submit)   </a>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDlg()">  @Html.Label(Resource.Cancel)   </a>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+</form>

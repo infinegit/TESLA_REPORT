@@ -1,0 +1,71 @@
+﻿@{
+    ViewBag.Title = "Add";
+}
+@using Resources
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">@Html.Label(Resource.Process_code)</td>
+            <td class="field">
+                <input id="txtaddForm_RoteCode" name="txtaddForm_RoteCode" class="easyui-textbox" data-options="required:true" />
+            </td>
+        </tr>
+        <tr>
+            <td class="label">@Html.Label(Resource.Process_description)</td>
+            <td class="field">
+                <input id="txtaddForm_RoteDesc" name="txtaddForm_RoteDesc" class="easyui-textbox" />
+            </td>
+        </tr>
+        <tr>
+            <td class="label">@Html.Label(Resource.Line_Name)</td>
+            <td class="field">
+                <input id="cboaddForm_LineName" name="cboaddForm_LineName" class="easyui-combobox" />
+            </td>
+        </tr>
+    </table>
+    <div style="padding: 15px; text-align: center;">
+        <a href="javascript:void(0)" id="addForm_Save" name="addForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Add)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+<script type="text/javascript">
+    $(function () {
+        $('#cboaddForm_LineName').combobox({
+            url: '@Url.Action("GetPordLineList")',
+            valueField: 'ProdLineCode',
+            textField: 'ProdLineName'
+        });
+    });
+
+    //提交数据
+    $('#addForm_Save').click(function () {
+        var roteCode = $("#txtaddForm_RoteCode").val();
+
+        var roteName = $("#txtaddForm_RoteDesc").val();
+
+        var ProdLineCode = $("#cboaddForm_LineName").combobox('getValue');
+
+        alert(ProdLineCode);
+        $.messager.confirm('@Html.Label(Resource.info)', '@Html.Label(Resource.Are_you_Sure_to_submit)', function (r) {
+            if (r) {
+                var req = new Object();
+                var data =
+                    {
+                        RoteCode: roteCode,
+                        RoteName: roteName,
+                        ProdLineCode: ProdLineCode,
+                    };
+                req["procRote"] = JSON.stringify(data);
+                $.post("@Url.Action("AddProcRote")", req, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Add_Success)');
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                    }
+                });
+            };
+        });
+    });
+</script>

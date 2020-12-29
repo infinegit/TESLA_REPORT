@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="REPORTModel.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2008" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityContainer Name="REPORTModelStoreContainer">
+          <EntitySet Name="RPT_Company" EntityType="REPORTModel.Store.RPT_Company" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="RPT_Fac_User_Map" EntityType="REPORTModel.Store.RPT_Fac_User_Map" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="RPT_Menu" EntityType="REPORTModel.Store.RPT_Menu" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="RPT_User" EntityType="REPORTModel.Store.RPT_User" store:Type="Tables" Schema="dbo" />
+        </EntityContainer>
+        <EntityType Name="RPT_Company">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="CompanyCode" Type="nvarchar" Nullable="false" MaxLength="10" />
+          <Property Name="CompanyName" Type="nvarchar" Nullable="false" MaxLength="50" />
+          <Property Name="CompanyAddress" Type="nvarchar" MaxLength="200" />
+          <Property Name="ConnectStr" Type="nvarchar" MaxLength="1000" />
+          <Property Name="CreateUser" Type="nvarchar" MaxLength="50" />
+          <Property Name="CreateTime" Type="datetime" />
+        </EntityType>
+        <EntityType Name="RPT_Fac_User_Map">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="FacID" Type="nvarchar(max)" />
+          <Property Name="UserID" Type="nvarchar(max)" />
+        </EntityType>
+        <EntityType Name="RPT_Menu">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="MenuID" Type="nvarchar(max)" />
+          <Property Name="RightID" Type="nvarchar(max)" />
+          <Property Name="Url" Type="nvarchar(max)" />
+          <Property Name="Target" Type="nvarchar(max)" />
+          <Property Name="MenuName" Type="nvarchar(max)" />
+          <Property Name="ParentID" Type="nvarchar(max)" />
+          <Property Name="OrderNum" Type="int" />
+          <Property Name="IconUrl" Type="nvarchar(max)" />
+          <Property Name="IconRow" Type="int" />
+          <Property Name="IconCol" Type="int" />
+        </EntityType>
+        <EntityType Name="RPT_User">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="UserAccount" Type="nvarchar(max)" />
+          <Property Name="UserName" Type="nvarchar(max)" />
+          <Property Name="Password" Type="nvarchar(max)" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="LastestLoginTime" Type="datetime" />
+          <Property Name="LastestLoginMachine" Type="nvarchar(max)" />
+          <Property Name="CreateTime" Type="datetime" />
+          <Property Name="CreateUser" Type="nvarchar(max)" />
+          <Property Name="Test" Type="nchar" MaxLength="10" />
+        </EntityType>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="REPORTModel" Alias="Self" p1:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:p1="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityContainer Name="ReportEntities" p1:LazyLoadingEnabled="true">
+          <EntitySet Name="RPT_Fac_User_Map" EntityType="REPORTModel.RPT_Fac_User_Map" />
+          <EntitySet Name="RPT_Menu" EntityType="REPORTModel.RPT_Menu" />
+          <EntitySet Name="RPT_User" EntityType="REPORTModel.RPT_User" />
+          <EntitySet Name="RPT_Company" EntityType="REPORTModel.RPT_Company" />
+        </EntityContainer>
+        <EntityType Name="RPT_Fac_User_Map">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Type="Int32" Name="ID" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Type="String" Name="FacID" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="UserID" MaxLength="Max" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="RPT_Menu">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Type="Int32" Name="ID" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Type="String" Name="MenuID" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="RightID" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="Url" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="Target" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="MenuName" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="ParentID" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="Int32" Name="OrderNum" />
+          <Property Type="String" Name="IconUrl" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="Int32" Name="IconRow" />
+          <Property Type="Int32" Name="IconCol" />
+        </EntityType>
+        <EntityType Name="RPT_User">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Type="Int32" Name="ID" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Type="String" Name="UserAccount" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="UserName" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="Password" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="Boolean" Name="IsActive" Nullable="false" />
+          <Property Type="DateTime" Name="LastestLoginTime" Precision="3" />
+          <Property Type="String" Name="LastestLoginMachine" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="DateTime" Name="CreateTime" Precision="3" />
+          <Property Type="String" Name="CreateUser" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="Test" MaxLength="10" FixedLength="true" Unicode="true" />
+        </EntityType>
+        <EntityType Name="RPT_Company">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Type="Int32" Name="ID" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Type="String" Name="CompanyCode" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="CompanyName" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="CompanyAddress" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="ConnectStr" MaxLength="1000" FixedLength="false" Unicode="true" />
+          <Property Type="String" Name="CreateUser" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Type="DateTime" Name="CreateTime" Precision="3" />
+        </EntityType>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="REPORTModelStoreContainer" CdmEntityContainer="ReportEntities">
+          <EntitySetMapping Name="RPT_Fac_User_Map">
+            <EntityTypeMapping TypeName="REPORTModel.RPT_Fac_User_Map">
+              <MappingFragment StoreEntitySet="RPT_Fac_User_Map">
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="FacID" ColumnName="FacID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RPT_Menu">
+            <EntityTypeMapping TypeName="REPORTModel.RPT_Menu">
+              <MappingFragment StoreEntitySet="RPT_Menu">
+                <ScalarProperty Name="IconCol" ColumnName="IconCol" />
+                <ScalarProperty Name="IconRow" ColumnName="IconRow" />
+                <ScalarProperty Name="IconUrl" ColumnName="IconUrl" />
+                <ScalarProperty Name="OrderNum" ColumnName="OrderNum" />
+                <ScalarProperty Name="ParentID" ColumnName="ParentID" />
+                <ScalarProperty Name="MenuName" ColumnName="MenuName" />
+                <ScalarProperty Name="Target" ColumnName="Target" />
+                <ScalarProperty Name="Url" ColumnName="Url" />
+                <ScalarProperty Name="RightID" ColumnName="RightID" />
+                <ScalarProperty Name="MenuID" ColumnName="MenuID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RPT_User">
+            <EntityTypeMapping TypeName="REPORTModel.RPT_User">
+              <MappingFragment StoreEntitySet="RPT_User">
+                <ScalarProperty Name="Test" ColumnName="Test" />
+                <ScalarProperty Name="CreateUser" ColumnName="CreateUser" />
+                <ScalarProperty Name="CreateTime" ColumnName="CreateTime" />
+                <ScalarProperty Name="LastestLoginMachine" ColumnName="LastestLoginMachine" />
+                <ScalarProperty Name="LastestLoginTime" ColumnName="LastestLoginTime" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="Password" ColumnName="Password" />
+                <ScalarProperty Name="UserName" ColumnName="UserName" />
+                <ScalarProperty Name="UserAccount" ColumnName="UserAccount" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RPT_Company">
+            <EntityTypeMapping TypeName="REPORTModel.RPT_Company">
+              <MappingFragment StoreEntitySet="RPT_Company">
+                <ScalarProperty Name="CreateTime" ColumnName="CreateTime" />
+                <ScalarProperty Name="CreateUser" ColumnName="CreateUser" />
+                <ScalarProperty Name="ConnectStr" ColumnName="ConnectStr" />
+                <ScalarProperty Name="CompanyAddress" ColumnName="CompanyAddress" />
+                <ScalarProperty Name="CompanyName" ColumnName="CompanyName" />
+                <ScalarProperty Name="CompanyCode" ColumnName="CompanyCode" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="False" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="True" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="无" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

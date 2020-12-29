@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="607ee2e6f3a9428ab20c4fa17c9b507d" Name="关系图1" ZoomLevel="98">
+        <EntityTypeShape EntityType="REPORTModel.RPT_Fac_User_Map" Width="3.25" PointX="5.125" PointY="0.75" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_Menu" Width="1.5" PointX="8.125" PointY="2.25" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_User" Width="1.5" PointX="11.125" PointY="3.75" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_Company" Width="1.5" PointX="3.875" PointY="3.625" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_Role" Width="1.5" PointX="7.375" PointY="6.5" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_UserRole" Width="1.5" PointX="3.05610683516418" PointY="13.801189145912039" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_UserRolePriv" Width="1.5" PointX="1.0155782331785086" PointY="23.959607537817028" />
+        <EntityTypeShape EntityType="REPORTModel.RPT_UserCompany" Width="1.5" PointX="5.75" PointY="13.625" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

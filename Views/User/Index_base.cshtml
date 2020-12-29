@@ -1,0 +1,149 @@
+﻿@model IEnumerable<I.Report.DAL.RPT_User>
+@{
+    ViewBag.Title = "Index";
+}
+@using Resources
+@using (Html.BeginForm())
+{
+<script type="text/javascript">
+        $(function () {
+            InitialDataGrid({
+                datatable:"datagrid",
+                toolbar: "toolbar",
+                total:@ViewBag.TotalRecords,
+                pageSize:@ConstInfo.PAGE_SIZE,
+                pageNumber:@ViewBag.PageNumber
+                });
+
+            $("#add").click(function(){
+                openDlg({
+                    url:"@Url.Action("Create")",
+                    title:'@Html.Label(Resource.newly_build)'
+                });
+            });
+
+            $("#modify").click(function(){
+
+                var row= $("#datagrid").datagrid('getSelected');
+                if(row==null||row==undefined)
+                {
+                    $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.No_rows_are_selected)');
+                    return;
+                }
+                openDlg({
+                    url:"@Url.Action("Edit")?id="+row.ID,
+                    title:'@Html.Label(Resource.Edit)'
+                });
+            });
+
+            $("#delete").click(function(){
+
+                var row= $("#datagrid").datagrid('getSelected');
+                if(row==null||row==undefined)
+                {
+                    $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.No_rows_are_selected)');
+                    return;
+                }
+
+                $.messager.confirm('@Html.Label(Resource.Tips)','@Html.Label(Resource.Are_you_sure_you_want_to_delete_this_data)',function(r){
+                    if(r){
+                        $.post("@Url.Action("Delete")",{id:row.ID},function(result){
+                            if(result.state=="success"){
+                                location.href=location.href;
+                            }
+                            else{
+                                $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Deletion_failed)');
+                            }
+                        });
+                    }
+                });
+
+            });
+
+            $("#txtSearch").keydown(function(e){
+                var keyCode;
+                if (window.event) {
+                    keyCode = e.keyCode;
+                }
+                else if (e.which) {
+                    keyCode = e.which;
+                }
+                if (keyCode == 13) {
+                    $("form").attr("method","get");
+                    $("form").submit();
+                }
+            });
+
+            $("#search").click(function(){
+                $("form").attr("method","get");
+                $("form").submit();
+            });
+
+        });
+</script>
+
+    <div id="toolbar" style="width: 100%;">
+
+        <div>
+            <a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">Add</a>
+            <a id="modify" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">Edit</a>
+            <a id="delete" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">Delete</a>
+        </div>
+
+        <div style="margin: 10px 0;">
+            @*<span style="padding: 0 5px;">截止日期:
+                <input class="easyui-datebox" style="width: 110px">
+                            -
+                <input class="easyui-datebox" style="width: 110px">
+                        </span>
+                        <span style="padding: 0 5px;">语言类型:
+                    <select class="easyui-combobox" data-options="panelheight:'auto'" style="width: 100px">
+                        <option value="java">Java</option>
+                        <option value="c">C</option>
+                        <option value="basic">Basic</option>
+                        <option value="perl">Perl</option>
+                        <option value="python">Python</option>
+                    </select>
+                        </span>
+                        <span style="padding: 0 5px;">状态:
+                    <select class="easyui-combobox" data-options="panelheight:'auto'" style="width: 100px">
+                        <option value="P">P</option>
+                    </select>
+                        </span>*@
+            <span style="padding: 0 5px;">
+                keyword：@Html.TextBox("txtSearch")
+            </span>
+            <span style="padding: 0 5px;">
+                <a id="search" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search'">Select</a>
+            </span>
+        </div>
+
+    </div>
+
+
+    <div>
+        <table id="datagrid" title="用户信息列表" style="width: 100%; height: auto; border: 1px solid #ccc;">
+            <thead>
+                <tr>
+                    <th data-options="field:'ID',checkbox:true"></th>
+                    <th data-options="field:'UserAccount'">@Html.DisplayNameFor(model => model.UserAccount)</th>
+                    <th data-options="field:'UserName'">@Html.DisplayNameFor(model => model.UserName)</th>
+                    <th data-options="field:'IsActive',align:'center'">@Html.DisplayNameFor(model => model.IsActive)</th>
+                    <th data-options="field:'LastestLoginTime'">@Html.DisplayNameFor(model => model.LastestLoginTime)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ID</td>
+                        <td>@item.UserAccount</td>
+                        <td>@item.UserName</td>
+                        <td>@Html.DisplayFor(model => item.IsActive)</td>
+                        <td>@item.LastestLoginTime</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

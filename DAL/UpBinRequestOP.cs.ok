@@ -1,0 +1,30 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DAL
+{
+    public class UpBinRequestOP : BaseOP
+    {
+        public UpBinRequestOP(string factID)
+        {
+            CompanyCode = factID;
+        }
+
+        public IEnumerable<LGS_UpBinRequest> GetData(string FactoryCode, int PageNumber, int PageSize, out int total)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.LGS_UpBinRequest.Where(p => p.FactoryCode == FactoryCode);
+
+                total = item.Count();
+
+                var data = item.OrderBy(p => p.CreateUserAccount).Skip((PageNumber - 1) * PageSize).Take(PageSize);
+
+                return data.ToList();
+            }
+        }
+    }
+}

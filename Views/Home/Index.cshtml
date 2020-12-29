@@ -1,0 +1,168 @@
+﻿@model IEnumerable<I.MES.Models.SYS_RPTMenu>
+@Styles.Render("~/Content/MenuIcon.css")
+@{
+    Layout = "~/Views/Shared/_Layout2.cshtml";
+}
+@using Resources
+@ViewContext.RouteData.Values["controllerName"]
+@ViewContext.RouteData.Values["actionName"]
+<script src="~/Scripts/jquery.cookie.js"></script>
+<script src="http://www.google.com/jsapi?key=internal" type="text/javascript"></script>
+<script type="text/javascript">
+
+    //关闭更改密码窗口
+    function closeWindow() {
+        $('#w').window('close');
+    }
+
+    function tabsClose() {
+        var tab = $('#tabs').tabs('getSelected');//获取当前选中tabs
+        var index = $('#tabs').tabs('getTabIndex', tab);//获取当前选中tabs的index
+        $('#tabs').tabs('close', index);//关闭对应index的tabs
+    }
+    //修改密码
+    function serverLogin() {
+        var $oldpass = $("#txtOldPass").val();
+        var $newpass = $('#txtNewPass').val();
+        var $rePass = $('#txtRePass').val();
+
+        if ($newpass == '') {
+            $.messager.alert('@Html.Label(Resource.system_info) ', '@Html.Label(Resource.Please_enter_your_password) ', '@Html.Label(Resource.warning) ');
+            return false;
+        }
+        if ($rePass == '') {
+            $.messager.alert('@Html.Label(Resource.system_info)', '@Html.Label(Resource.Please_enter_the_password_again)', '@Html.Label(Resource.warning)');
+            return false;
+        }
+
+        if ($newpass != $rePass) {
+            $.messager.alert('@Html.Label(Resource.system_info)', '@Html.Label(Resource.The_passwords_do_not_match__Please_re_enter)', '@Html.Label(Resource.warning)');
+            return false;
+        }
+
+        $.post("@Url.Action("ChangePassword")", { oldPwd: $oldpass, newPwd: $newpass }, function (data) {
+            if (data.state == "success") {
+                $.messager.alert('@Html.Label(Resource.system_info)', '@Html.Label(Resource.password_changed_successfully)<br />@Html.Label(Resource.Please_remember_your_new_password)', '@Html.Label(Resource.info)');
+                $newpass.val('');
+                $rePass.val('');
+                closeWindow();
+            }
+            else {
+                $.messager.alert('@Html.Label(Resource.Error)', data.msg, '@Html.Label(Resource.Error)');
+            }
+        });
+    }
+
+    $(function () {
+
+        $('#editPass').click(function () {
+            $('#w').window('open');
+        });
+
+        $('#btnEp').click(function () {
+            serverLogin();
+        })
+
+        $('#loginOut').click(function () {
+            $.messager.confirm('@Html.Label(Resource.system_info)','@Html.Label(Resource.Are_you_sure_you_want_to_logout)' , function (r) {
+                if (r) {
+                    $.post("@Url.Action("OutLogin", "Account")", null, function (res) {
+                        if (res.Result == "1") {
+                            location.href = "@Url.Action("Login", "Account")";
+                        } else {
+                            $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Exit_failure)' + res.Message,'@Html.Label(Resource.Error)');
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+<div class="easyui-layout" data-options="fit:true" style="width: 100%; height: 100%;">
+    <div data-options="region:'north',split:true" style="overflow: hidden; height: 30px; background: url(images/layout-browser-hd-bg.gif) #7f99be repeat-x center 50%; line-height: 20px; color: #fff;">
+        <span style="float: right; padding-right: 20px;" class="head"><a href="#" id="editPass">@Html.Label(Resource.Password_Change)</a> <a href="#" id="loginOut">@Html.Label(Resource.Logout)</a></span>
+        <span style="padding-left: 20px; font-size: 16px;">
+            @Html.Label(Resource.In_fine_traceability_system) [V2.0]&nbsp;&nbsp;&nbsp;&nbsp;[@ViewBag.CompanyName &nbsp;-&nbsp; @ViewBag.FactoryCode]&nbsp;&nbsp;&nbsp;&nbsp;Account： &nbsp;-&nbsp; @ViewBag.userAccount]
+        </span>
+    </div>
+    <div data-options="region:'south',split:true" style="height: 30px; background: #D2E0F2; text-align: center;">
+        <div class="footer">@Html.Label(Resource.Copyright_copy_2020_Shanghai_China_In_fine)</div>
+    </div>
+    <div data-options="region:'west',split:true,title:'Navigation Menu'" style="width: 180px;" id="west">
+        <div id="leftNav" class="easyui-accordion" data-options="fit:true,border:false" style="width: 173px; height: 342px;">
+            <!--导航内容-->
+            @foreach (var item in Model)
+            {
+                if (item.ParentID == null || item.ParentID.Equals(""))
+                {
+                    <div title="@item.MenuName" style="overflow: auto;">
+                        <ul>
+                            @foreach (var childItem in Model.Where(p => p.ParentID == item.MenuID))
+                            {
+                                <li>
+                                    <div data-href="@childItem.Url">
+                                        <a><span class="yficon icon-@childItem.IconRow-@childItem.IconCol"></span>@childItem.MenuName</a>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+    <div id="mainPanle" data-options="region:'center'" style="background: #eee; overflow-y: hidden">
+        <div id="tabs" class="easyui-tabs" data-options="fit:true,border:false">
+            <div title="Welcome to use" style="padding: 20px; overflow: hidden;" id="home">
+                <h1>@Html.Label(Resource.Welcome_to_Traceability_configuration_system)</h1>
+            </div>
+        </div>
+    </div>
+
+
+    <!--修改密码窗口-->
+    <div id="w" class="easyui-dialog" title='@Html.Label(Resource.Change_Password)' data-options="collapsible:false,minimizable:false,maximizable:false,iconCls:'icon-save',closed:true,modal:true" style="width: 360px; height: 180px; padding: 5px; background: #fafafa;">
+        <div class="easyui-layout" data-options="fit:true">
+            <div data-options="region:'center',border:false" style="padding: 10px; background: #fff; border: 1px solid #ccc;">
+                <table>
+                    <tr>
+                        <td>@Html.Label(Resource.original_password)：</td>
+                        <td>
+                            <input id="txtOldPass" type="password" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>@Html.Label(Resource.new_password)：</td>
+                        <td>
+                            <input id="txtNewPass" type="password" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>@Html.Label(Resource.confirm_password)：</td>
+                        <td>
+                            <input id="txtRePass" type="password" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div data-options="region:'south',border:false" style="text-align: center; height: 30px; line-height: 30px;">
+                <a id="btnEp" class="easyui-linkbutton" data-options="iconCls:'icon-ok'" href="javascript:void(0)">@Html.Label(Resource.Conform)</a>&nbsp;&nbsp;
+                <a class="easyui-linkbutton" data-options="iconCls:'icon-cancel'" href="javascript:void(0)" onclick="closeWindow()">@Html.Label(Resource.Cancel)</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="mm" class="easyui-menu" style="width: 150px;">
+        <div id="mm-tabclose">关闭</div>
+        <div id="mm-tabcloseall">全部关闭</div>
+        <div id="mm-tabcloseother">除此之外全部关闭</div>
+        <div class="menu-sep"></div>
+        <div id="mm-tabcloseright">当前页右侧全部关闭</div>
+        <div id="mm-tabcloseleft">当前页左侧全部关闭</div>
+        <div class="menu-sep"></div>
+        <div id="mm-exit">退出</div>
+    </div>
+
+</div>
+

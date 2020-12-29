@@ -1,0 +1,127 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+@Scripts.Render("~/EasyUI/datagrid-detailview.js")
+@using Resources
+<div>
+    <table id="divSearch">
+        <tr>
+            <td>@Html.Label(Resource.User_account):</td>
+            <td>
+                <input class="easyui-textbox" id="RoleCode" operator="LIKE" />
+            </td>
+            <td>
+                <a id="btnSearch" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'" onclick="">@Html.Label(Resource.Select)</a>
+                <a id="btnRefresh" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="refush()">@Html.Label(Resource.Refresh)</a>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="easyui-panel" id="toolbar" style="width:1500px">
+    <a id="add" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">@Html.Label(Resource.Add)</a>
+    <a id="modify" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">@Html.Label(Resource.Edit)</a>
+    <a id="techrequeip" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">@Html.Label(Resource.Process)</a>
+    @*    <a id="pulish" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">发布</a>*@
+<a id="delete" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">@Html.Label(Resource.Delete) </a>
+</div>
+<table id="datagrid" class="easyui-datagrid" toolbar="#toolbar" title='@Html.Label(Resource.process_info)' data-options="singleSelect:true,rownumbers:true">
+</table>
+<script type="text/javascript">
+    //页面加载时
+    $(function () {
+        datagrid();
+    });
+    //查询
+    $('#btnSearch').click(function ()
+    {
+        //加载的数据
+        datagrid();
+    });
+    //数据绑定
+    function datagrid() {
+        Datagrid.ViewName = "MFG_ProcRoute";
+        Datagrid.SortColumn = "ID";
+        Datagrid.Columns = [[
+                      { field: 'ID', title: 'No', width: '60px', align: 'center' ,hidden:"true"},
+                      { field: 'RoteCode', title:'@Html.Label(Resource.Process_code) ', width: '160px', align: 'center' },
+                      { field: 'RoteName', title:'@Html.Label(Resource.Process_description) ', width: '100px', align: 'center' },
+                      { field: 'ProdLineCode', title: '@Html.Label(Resource.lince_code) ', width: '160px', align: 'center' },
+                      { field: 'CreateUser', title: '@Html.Label(Resource.Create_user) ', width: '100px', align: 'center' },
+                      { field: 'CreateTime', title:'@Html.Label(Resource.Creation_time) ' , width: '140px', align: 'center' },
+                      { field: 'ModifyUser', title:'@Html.Label(Resource.Modify_user) ' , width: '100px', align: 'center' },
+                      { field: 'ModifyTime', title:'@Html.Label(Resource.modify_time) ' , width: '140px', align: 'center' },
+
+        ]];
+        Datagrid.Pagination = false;
+        Datagrid.URL = ("@Url.Action("GetReportData", "Report/Report")");
+        Datagrid.Search("#divSearch");
+    }
+    //刷新页面
+    function refush() {
+        document.location.reload();
+    }
+
+    //新增
+    $("#add").click(function () {
+        openDlg({
+            url: "@Url.Action("Add")",
+            title: '@Html.Label(Resource.Add) ',
+            width: "350px",
+            height: "220px"
+        });
+    });
+
+    //修改
+    $("#modify").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert('@Html.Label(Resource.info) ','@Html.Label(Resource.Must_Select_the_data_to_modify)');
+            return;
+        }
+        openDlg({
+            url: "@Url.Action("Modify")?ID=" + row.ID,
+            title: '@Html.Label(Resource.update_info) ',
+            width: "350px",
+            height: "190px"
+        });
+    });
+    //工艺要求
+    $("#techrequeip").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert('@Html.Label(Resource.info) ','@Html.Label(Resource.Please_select_the_data_to_configure) ');
+            return;
+        }
+        openDlg({
+            url: "@Url.Action("TechRequipment")?ID=" + row.ID,
+            title: '@Html.Label(Resource.process_info) ',
+            width: "1200px",
+            height: "720px"
+        });
+    });
+
+    //删除
+    $("#delete").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert('@Html.Label(Resource.info) ', '@Html.Label(Resource.Please_select_the_information_to_delete) ');
+            return;
+        }
+        $.messager.confirm('@Html.Label(Resource.info) ','@Html.Label(Resource.Are_you_sure_you_want_to_delete_this_data) ', function (r) {
+            if (r) {
+                $.post("@Url.Action("deleteProcRote")", { procID: row.ID }, function (result) {
+                    if (result.state == "success") {
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.info) ', '@Html.Label(Resource.Deletion_succeeded) ');
+                    }
+                    else {
+                        $.messager.alert('@Html.Label(Resource.Error) ', result.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+

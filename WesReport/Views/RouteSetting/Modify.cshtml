@@ -1,0 +1,62 @@
+﻿@{
+    ViewBag.Title = "Modify";
+}
+@using Resources
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">@Html.Label(Resource.Process_code)</td>
+            <td class="field">
+                <input id="txtmodifyForm_RoteCode" name="txtmodifyForm_RoteCode" class="easyui-textbox" data-options="required:true"
+                       value="@Model.RoteCode" disabled="disabled" />
+            </td>
+        </tr>
+        <tr>
+            <td class="label">@Html.Label(Resource.Process_name)</td>
+            <td class="field">
+                <input id="txtmodifyForm_RoteName" name="txtmodifyForm_RoteName" class="easyui-textbox" value="@Model.RoteName" />
+            </td>
+        </tr>
+        <tr style="display:none"><td><input id="txtmodifyForm_ID" name="txtmodifyForm_ID" class="easyui-textbox" value="@Model.ID" /></td></tr>
+    </table>
+    <div style="padding: 5px; text-align: center;">
+
+        <a href="javascript:void(0)" id="modifyForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Edit)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    //提交数据
+    $('#modifyForm_Save').click(function () {
+        var ID = $("#txtmodifyForm_ID").val();
+        RoteCode = $("#txtmodifyForm_RoteCode").val();
+        var RoteName = $("#txtmodifyForm_RoteName").val();
+        if (RoteName == "") {
+            $.messager.alert('@Html.Label(Resource.Update_failed)','@Html.Label(Resource.process_name_cannot_be_empty)');
+            return;
+        }
+
+        $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_Sure_to_submit)', function (r) {
+            if (r) {
+                var req = new Object();
+                var data =
+                {
+                        ID: ID,
+                        RoteCode: RoteCode,
+                        RoteName: RoteName
+                    };
+                req["procRote"] = JSON.stringify(data);
+                $.post("@Url.Action("ModifyProcRote")", req, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Modification_succeeded)');
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message);
+                    }
+                });
+            };
+        });
+    });
+</script>

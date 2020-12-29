@@ -1,0 +1,84 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using Resources
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+<table id="divSearch">
+    <tr>
+        <td>@Html.Label(Resource.Operation_time):</td>
+        <td>
+            <input class="easyui-datetimebox" operator=">=" columnname="CreateTime" id="CreateTimeB" style="width: 180px" />
+        </td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Html.Label(Resource.To):</td>
+        <td>
+            <input class="easyui-datetimebox" operator="<=" columnname="CreateTime" id="CreateTimeE" style="width: 180px" />
+        </td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Html.Label(Resource.serial_number):</td>
+        <td>
+            <input class="easyui-textbox" id="SerialNum" name="SerialNum" style="width: 180px" />
+        </td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Html.Label(Resource.PartNo):</td>
+        <td>
+            <input class="easyui-textbox" id="PartNo" name="PartNo" style="width: 180px" />
+        </td>
+    </tr>
+    <tr>
+        <td>@Html.Label(Resource.station_code)</td>
+        <td>
+            <input class="easyui-textbox" id="StationCode" name="StationCode" style="width: 180px" />
+        </td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Html.Label(Resource.Item_Name):</td>
+        <td>
+            <input class="easyui-textbox" id="ItemName" name="ItemName" style="width: 180px" />
+        </td>
+        <td>
+            <a id="btnSearch" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'" onclick="">&nbsp;&nbsp;&nbsp;@Html.Label(Resource.Select)</a>
+            <a id="btnExport" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-export'" onclick="">@Html.Label(Resource.Export)</a>
+        </td>
+    </tr>
+
+</table>
+<div class="easyui-panel" title='@Html.Label(Resource.Bar_code_tracing_query)'>
+    <table id="datagrid" data-options="singleSelect:true">
+    </table>
+</div>
+<script type="text/javascript">
+    $(function () {
+        var nowDate = new Date();
+        var yesterdayTime = nowDate.setDate(nowDate.getDate() - 1);
+        var yesterday = new Date(yesterdayTime);
+        $('#CreateTimeB').datetimebox('setValue', formatDate(yesterday, "yyyy-MM-dd 00:00:00"));//前一天时间
+        $("#CreateTimeE").datetimebox("setValue", new Date().toLocaleDateString());//当前时间
+
+        BindGrid();
+    })
+    $("#btnSearch").click(function () {
+        Datagrid.Search("#divSearch");
+    });
+    function BindGrid() {
+        Datagrid.ViewName = "PP_BarCodeTrack";
+        Datagrid.SortColumn = "CreateTime";
+        Datagrid.Columns = [[
+                     { field: 'ID', title: 'ID', width: '100px', align: 'center',hidden:true },
+                     { field: 'SerialNum', title: '@Html.Label(Resource.serial_number)', width: '140px', align: 'center' },
+                     { field: 'PartNo', title:'@Html.Label(Resource.PartNo) ', width: '180px', align: 'center' },
+                     { field: 'StationCode', title:'@Html.Label(Resource.station_code) ', width: '100px', align: 'center' },
+                     { field: 'ItemName', title:'@Html.Label(Resource.Item_Name)', width: '150px', align: 'center' },
+                     { field: 'ItemType', title:'@Html.Label(Resource.Item_type) ', width: '100px', align: 'center' },
+                     { field: 'ItemValue', title:'@Html.Label(Resource.Item_Value)' , width: '180px', align: 'center' },
+                     { field: 'CreateUser', title:'@Html.Label(Resource.Create_user)', width: '100px', align: 'center' },
+                     { field: 'CreateTime', title:'@Html.Label(Resource.CreateTime)' , width: '150px', align: 'center' },
+                     { field: 'CreateUser', title:'@Html.Label(Resource.Create_user)' , width: '100px', align: 'center' },
+                     { field: 'CreateMachine', title:'@Html.Label(Resource.CreateMachine)', width: '150px', align: 'center' },
+
+        ]];
+        Datagrid.URL = "@Url.Action("GetReportData","Report")";
+        Datagrid.Pagination = false;
+        Datagrid.Init();
+
+    }
+    $("#btnExport").click(function () {
+        Datagrid.Export("@Url.Action("ExportOut", "Report")");
+        });
+</script>

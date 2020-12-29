@@ -1,0 +1,290 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+
+namespace DAL
+{
+    /// <summary>
+    /// 
+    /// </summary>
+    public class SelectListItemOP : BaseOP
+    {
+        public SelectListItemOP(string CompanyCode)
+        {
+            CompanyCode = CompanyCode;
+        }
+
+        public List<SelectListItem> GetUserRoles(string userAccount)
+        {
+            var data = from a in DB.SYS_UserRole
+                       from b in DB.SYS_Role
+                       where a.RoleCode == b.RoleCode && a.UserAccount == userAccount
+                       select new SelectListItem()
+                       {
+                           Text = b.RoleName,
+                           Value = a.RoleCode
+                       };
+            return data.ToList();
+        }
+
+        #region EMS模块
+        /// <summary>
+        /// 获得功能位置
+        /// 注：上层功能位置是工厂号就是第一层功能位置
+        /// </summary>
+        /// <param name="superiorFunLoc"></param>
+        /// <returns></returns>
+        public List<SelectListItem> GetFunctionLocation(string superiorFunLoc)
+        {
+            List<SelectListItem> data = new List<SelectListItem>();
+            if (!string.IsNullOrEmpty(superiorFunLoc))
+            {
+                data = (from a in DB.EMS_FunctionLocation
+                        where a.SuperiorFunLocCode == superiorFunLoc
+                        select new SelectListItem()
+                        {
+                            Text = a.FunctionLocationName,
+                            Value = a.FunctionLocationCode
+                        }).ToList();
+            }
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = "",
+            });
+            return data;
+        }
+        /// <summary>
+        /// 获得第一层设备
+        /// </summary>
+        /// <returns></returns>        
+        public List<SelectListItem> GetEquipLevelOne()
+        {
+            var data = (from a in DB.EMS_Equipment
+                        where string.IsNullOrEmpty(a.SuperiorEquip)
+                        select new SelectListItem()
+                        {
+                            Text = a.EquipName,
+                            Value = a.EquipCode
+                        }).ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+
+        }
+        /// <summary>
+        /// 获得第二层设备
+        /// </summary>
+        /// <param name="superiorEquipCode"></param>
+        /// <returns></returns>        
+        public List<SelectListItem> GetEquipLevelTwo(string superiorEquipCode)
+        {
+            List<SelectListItem> data = new List<SelectListItem>();
+            if (!string.IsNullOrEmpty(superiorEquipCode))
+            {
+                data = (from a in DB.EMS_Equipment
+                        where a.SuperiorEquip == superiorEquipCode
+                        select new SelectListItem()
+                        {
+                            Text = a.EquipName,
+                            Value = a.EquipCode
+                        }).ToList();
+            }
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+        /// <summary>
+        /// 根据功能位置获得设备
+        /// </summary>
+        /// <param name="functionLocationCode"></param>
+        /// <returns></returns>        
+        public List<SelectListItem> GetEquipByFunLoc(string functionLocationCode)
+        {
+            var data = (from a in DB.EMS_Equipment
+                        where a.FunctionLocationCode == functionLocationCode
+                        select new SelectListItem()
+                        {
+                            Text = a.EquipName,
+                            Value = a.EquipCode
+                        }).ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+
+        /// <summary>
+        /// 获取故障部件
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetHitchPartGrpCode()
+        {
+            var data = (from a in DB.EMS_Catalogue
+                        where a.CatalogCode == "B"
+                        select new SelectListItem()
+                        {
+                            Text = a.CodeGroupDesc,
+                            Value = a.CodeGroup
+                        }).Distinct().ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+        /// <summary>
+        /// 获取故障现象
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetHitchDescGrpCode()
+        {
+            var data = (from a in DB.EMS_Catalogue
+                        where a.CatalogCode == "C"
+                        select new SelectListItem()
+                        {
+                            Text = a.CodeGroupDesc,
+                            Value = a.CodeGroup
+                        }).Distinct().ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+        /// <summary>
+        /// 获取故障原因
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetHitchReasionGrpCode()
+        {
+            var data = (from a in DB.EMS_Catalogue
+                        where a.CatalogCode == "5"
+                        select new SelectListItem()
+                        {
+                            Text = a.CodeGroupDesc,
+                            Value = a.CodeGroup
+                        }).Distinct().ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+        /// <summary>
+        /// 获取详细代码
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetCatalogCode(string codeGroup)
+        {
+            var data = (from a in DB.EMS_Catalogue
+                        where a.CodeGroup == codeGroup
+                        select new SelectListItem()
+                        {
+                            Text = a.CodeDesc,
+                            Value = a.Code
+                        }).ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+        /// <summary>
+        /// 获得PD大班组长组
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetLargeGroup()
+        {
+            var data = (from a in DB.EMS_LagreGroup
+                        select new SelectListItem()
+                        {
+                            Text = a.ShiftName,
+                            Value = a.ShiftID
+                        }).ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+        /// <summary>
+        /// 维修班组
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetMaintainGroup()
+        {
+            var data = (from a in DB.EMS_MaintainShift
+                        select new SelectListItem()
+                        {
+                            Text = a.ShiftName,
+                            Value = a.ShiftID
+                        }).ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+        /// <summary>
+        /// 维修班组
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetArrageGroup()
+        {
+            var data = (from a in DB.EMS_MaintainDuty
+                        where a.IsEff == true
+                        select new SelectListItem()
+                        {
+                            Text = a.ArrangeName,
+                            Value = a.ArrangeID
+                        }).ToList();
+            data.Insert(0, new SelectListItem()
+            {
+                Text = "--请选择--",
+                Value = ""
+            });
+            return data;
+        }
+        /// <summary>
+        /// IPQC
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetEmergencyLabel()
+        {
+            List<SelectListItem> rtn = new List<SelectListItem>
+            {
+                new SelectListItem()
+                {
+                    Text = "一般",
+                    Value = "B"
+                },
+                new SelectListItem()
+                {
+                    Text = "紧急",
+                    Value = "A",
+                }
+            };
+            return rtn;
+        }
+        #endregion
+
+    }
+}

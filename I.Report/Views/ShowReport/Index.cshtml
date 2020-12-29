@@ -1,0 +1,23 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<form action="@Url.Action("Index")" method="post" id="indexForm">
+    <script type="text/javascript">
+        $(function () {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("GetURL")',
+                    cache: false,
+                    dataType: "json",
+                    success: function (data) {
+                        document.getElementById("fr").src = data;
+                    }
+                });
+            })
+    </script>
+</form>
+
+<pre class="brush: c-sharp;"><iframe  id="fr" style="position:absolute; left:0; top:0; height:100%; width:100%; border:0px;" scrolling="no"></pre>
+
+<br>

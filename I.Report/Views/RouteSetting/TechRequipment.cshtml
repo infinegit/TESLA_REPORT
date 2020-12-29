@@ -1,0 +1,669 @@
+﻿@{
+    ViewBag.Title = "TechRequipment";
+}
+@using Resources
+<form method="post" id="createForm">
+    <script type="text/javascript">
+
+
+        //加载RoteStation数据
+        function dgStationRefresh() {
+            $('#dgStation').datagrid({
+                url: "@Url.Action("getRoteStationByRoteID")?ID=" + $("#txtmodifyForm_ID").val(),
+                method: 'POST',
+                dataType: 'json',//请求数据类型
+                striped: true,
+                fitColumns: true,
+                singleSelect: true,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                columns: [[
+                           { field: 'ID', title:'@Html.Label(Resource.ID)', width: 140, align: 'left', hidden: 'true' },
+                           { field: 'StationCode', title:'@Html.Label(Resource.Process_code)' , width: 100, align: 'left' },
+                           { field: 'StationName', title:'@Html.Label(Resource.Station_name)' , width: 140, align: 'left' },
+                           { field: 'RowNum', title:'@Html.Label(Resource.row_num)', width: 140, align: 'left' }
+                ]],
+                onClickRow: checkRoteStation
+            });
+        }
+
+        $("#btnaddStaionCancle").click(function () {
+            $('#winAddStation').window('close');
+        });
+        $("#btneditStaionCancle").click(function () {
+            $('#winUpdateStation').window('close');
+        });
+        $("#btnaddWorkStepCancle").click(function () {
+            $('#winAddWorkSetp').window('close');
+        });
+        $("#btnaddWorkStepCancle").click(function () {
+            $('#winEditWorkSetp').window('close');
+        });
+        //add station save
+        $('#addStationForm_Save').click(function () {
+            var stationCode = $("#addStationForm_stationCode").textbox('getValue');
+            var statinName = $("#addStationForm_stationName").textbox('getValue');
+            var reqNo = $("#addStationForm_ReqNo").textbox('getValue');
+            var RoteID = $("#txtmodifyForm_ID").textbox('getValue');
+            if (stationCode == "" || stationCode == null || stationCode == undefined) {
+                $.messager.alert("error", result.message, "error");
+            }
+
+
+            $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_Sure_to_submit)', function (r) {
+                if (r) {
+                    var req = new Object();
+                    var data =
+                        {
+                            StationCode: stationCode,
+                            StationName: statinName,
+                            RowNum: reqNo,
+                            RoteID: RoteID
+                        };
+                    req["procStation"] = JSON.stringify(data);
+                    $.post("@Url.Action("AddProcStation")", req, function (result) {
+                        if (result.state === "success") {
+                            $('#winAddStation').window('close');
+                            dgStationRefresh()
+                            $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Add_Success)');
+                        } else {
+                            $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                        }
+                    });
+                };
+            });
+        });
+
+
+        //add station save
+        $('#editStationForm_Save').click(function () {
+            var stationCode = $("#editStationForm_stationCode").textbox('getValue');
+            var statinName = $("#editStationForm_stationName").textbox('getValue');
+            var reqNo = $("#editStationForm_ReqNo").textbox('getValue');
+            var row = $('#dgStation').datagrid('getSelected');
+            if (row) {
+                var procStationID = row.ID;
+                var req = new Object();
+                var data =
+                    {
+                        StationCode: stationCode,
+                        StationName: statinName,
+                        RowNum: reqNo,
+                        ID: procStationID
+                    };
+                req["procStation"] = JSON.stringify(data);
+                $.post("@Url.Action("updateProcStation")", req, function (result) {
+                    if (result.state === "success") {
+                        $('#winUpdateStation').window('close');
+                        dgStationRefresh()
+                        $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Edit_success)');
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message, '@Html.Label(Resource.Error)');
+                    }
+                });
+            }
+            else {
+                $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Please_Select_the_data_to_edit)');
+            }
+
+
+        });
+
+        function checkRoteStation() {
+            var row = $('#dgStation').datagrid('getSelected');
+            if (row) {
+                loadWorkStepByRoteStationID(row.ID);
+            }
+        }
+        //选择工序工艺加载工步
+        function loadWorkStepByRoteStationID(roteStationID) {
+            $('#dgWorkStep').datagrid({
+                url: "@Url.Action("getWorkStepByRoteStationID")?ID=" + roteStationID,
+                method: 'POST',
+                dataType: 'json',//请求数据类型
+                striped: true,
+                fitColumns: true,
+                singleSelect: true,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                columns: [[
+                           { field: 'ID', title: 'ID', width: 140, align: 'left', hidden: 'true' },
+                           { field: 'RowNum', title:'@Html.Label(Resource.Step_No)', width: 120, align: 'left' },
+                           { field: 'StepDesc', title:'@Html.Label(Resource.Step_Desc)' , width: 120, align: 'left' },
+                           { field: 'PluginID', title:'@Html.Label(Resource.Step_Type)', width: 140, align: 'left' }
+                ]],
+                onClickRow: checkWorkStep
+            });
+        }
+
+        function checkWorkStep() {
+            var row = $('#dgWorkStep').datagrid('getSelected');
+            if (row) {
+                loadWorkStepParams(row.ID);
+            }
+        }
+
+        var toolbar = [{
+            text:'@Html.Label(Resource.Add)',
+            iconCls: 'icon-add',
+            handler: function () {
+                $("#adWorkStep_WorkStepCode").textbox('setValue', '')
+                $("#adWorkStep_WorkStepName").textbox('setValue', '')
+                $('#addWorkStep_WorkStepType').combogrid('clear');
+                //open win
+                var row = $('#dgStation').datagrid('getSelected');
+                if (row) {
+                    $('#winAddWorkSetp').window('open');
+                } else {
+                    $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Please_select_the_process_station_first)');
+                }
+            }
+        },
+        {
+            text: '@Html.Label(Resource.Edit)',
+            iconCls: 'icon-edit',
+            handler: function () {
+
+                var row = $('#dgWorkStep').datagrid('getSelected');
+                if (row) {
+                    var ID = row.ID;
+                    $("#editWorkStep_WorkStepCode").textbox('setValue', row.RowNum)
+                    $("#editWorkStep_WorkStepName").textbox('setValue', row.StepDesc)
+                    $("#editWorkStep_WorkStepType").combogrid("setValue", row.PluginID);
+                    //winEditWorkSetp
+                    $('#winEditWorkSetp').window('open');
+                }
+                else {
+                    $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Please_Select_the_data_to_edit)');
+                }
+            }
+        },
+        {
+            text:'@Html.Label(Resource.Delete)',
+            iconCls: 'icon-remove',
+            handler: function () {
+                $.messager.confirm('@Html.Label(Resource.info)', '@Html.Label(Resource.Are_you_sure_you_want_to_delete_this_data)', function (r) {
+                    if (r) {
+                        var row = $('#dgWorkStep').datagrid('getSelected');
+                        if (row) {
+                            var workStepID = row.ID;
+                            $.post("@Url.Action("deleteWorkStep")", { workStepID: workStepID }, function (result) {
+                                if (result.state === "success") {
+                                    var row = $('#dgStation').datagrid('getSelected');
+                                    if (row) {
+                                        loadWorkStepByRoteStationID(row.ID);
+                                    }
+
+                                    $.messager.alert('@Html.Label(Resource.info)', '@Html.Label(Resource.Deletion_succeeded)');
+                                } else {
+                                    $.messager.alert('@Html.Label(Resource.Error)', result.message, '@Html.Label(Resource.Error)');
+                                }
+                            });
+                        }
+                        else {
+                            $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Please_Select_the_data_to_delete)');
+                        }
+
+                    };
+                });
+            }
+        }];
+        //工站工具栏
+        var procStationBar = [{
+            text: '@Html.Label(Resource.Add)'/*'Add'*/,
+            iconCls: 'icon-add',
+            handler: function () {
+                //clear data
+                $("#addStationForm_stationCode").textbox('setValue', '')
+                $("#addStationForm_stationName").textbox('setValue', '')
+                $("#addStationForm_ReqNo").textbox('setValue', '')
+                $('#winAddStation').window('open');
+            }
+        },
+        {
+            text:'@Html.Label(Resource.Edit)' /*'Eidt'*/,
+            iconCls: 'icon-edit',
+            handler: function () {
+                var row = $('#dgStation').datagrid('getSelected');
+                if (row) {
+                    var procStationID = row.ID;
+                    $("#editStationForm_stationCode").textbox('setValue', row.StationCode)
+                    $("#editStationForm_stationName").textbox('setValue', row.StationName)
+                    $("#editStationForm_ReqNo").textbox('setValue', row.RowNum)
+                    $('#winUpdateStation').window('open');
+                }
+                else {
+                    $.messager.alert('@Html.Label(Resource.Error)', '@Html.Label(Resource.Please_Select_the_data_to_edit)');
+                }
+
+            }
+        },
+        {
+            text:'@Html.Label(Resource.Delete)',
+            iconCls: 'icon-remove',
+            handler: function () {
+                $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_sure_you_want_to_delete_this_data)', function (r) {
+                    if (r) {
+                        var row = $('#dgStation').datagrid('getSelected');
+                        if (row) {
+                            var procStationID = row.ID;
+                            $.post("@Url.Action("deleteProcStation")", { procStationID: procStationID }, function (result) {
+                                if (result.state === "success") {
+                                    dgStationRefresh()
+                                    $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Deletion_succeeded)');
+                                } else {
+                                    $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                                }
+                            });
+                        }
+                        else {
+                            $.messager.alert('@Html.Label(Resource.Error)', '@Html.Label(Resource.Please_Select_the_data_to_delete)');
+                        }
+
+                    };
+                });
+            }
+        }];
+        //add workStep save
+        $('#addWorkStep_Save').click(function () {
+            var row = $('#dgStation').datagrid('getSelected');
+            if (row) {
+                var RouteSationID = row.ID;
+                var RowNum = $("#adWorkStep_WorkStepCode").textbox('getValue');
+                var StepDesc = $("#adWorkStep_WorkStepName").textbox('getValue');
+
+                var g = $('#addWorkStep_WorkStepType').combogrid('grid');	// get datagrid object
+                var r = g.datagrid('getSelected');	// get the selected row
+                var PluginID = r.PluginID;
+
+                $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_Sure_to_submit)' , function (r) {
+                    if (r) {
+                        var req = new Object();
+                        //alert(1);
+                        var data =
+                            {
+                                RouteSationID: RouteSationID,
+                                RowNum: RowNum,
+                                StepDesc: StepDesc,
+                                PluginID: PluginID
+                            };
+                        // alert(2);
+                        req["workStep"] = JSON.stringify(data);
+                        $.post("@Url.Action("AddWorkStep")", req, function (result) {
+                            if (result.state == "success") {
+                                $('#winAddWorkSetp').window('close');
+                                var row = $('#dgStation').datagrid('getSelected');
+                                if (row) {
+                                    loadWorkStepParams('');
+
+                                    loadWorkStepByRoteStationID(row.ID);
+
+                                }
+                                $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Add_Success)');
+                            }
+
+                            else {
+                                $.messager.alert('@Html.Label(Resource.Error)', result.message, '@Html.Label(Resource.Error)');
+                            }
+                        });
+                    };
+                });
+            }
+            else {
+                $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Please_select_the_process_station_first)');
+            }
+        });
+
+
+        $('#editWorkStep_Save').click(function () {
+            var row = $('#dgWorkStep').datagrid('getSelected');
+            if (row) {
+                //alert(row.ID);
+                var ID = row.ID;
+                var RowNum = $("#editWorkStep_WorkStepCode").textbox('getValue');
+                var StepDesc = $("#editWorkStep_WorkStepName").textbox('getValue');
+
+                var g = $('#editWorkStep_WorkStepType').combogrid('grid');	// get datagrid object
+                var r = g.datagrid('getSelected');	// get the selected row
+                var PluginID = r.PluginID;
+
+                $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_Sure_to_submit)', function (r) {
+                    if (r) {
+                        var req = new Object();
+                        var data =
+                            {
+                                ID: ID,
+                                RowNum: RowNum,
+                                StepDesc: StepDesc,
+                                PluginID: PluginID
+                            };
+                        req["workStep"] = JSON.stringify(data);
+                        $.post("@Url.Action("UpdateWorkStep")", req, function (result) {
+                            if (result.state == "success") {
+                                $('#winEditWorkSetp').window('close');
+                                var row = $('#dgStation').datagrid('getSelected');
+                                if (row) {
+
+                                    loadWorkStepByRoteStationID(row.ID);
+
+                                }
+                                $.messager.alert('@Html.Label(Resource.info)', '@Html.Label(Resource.Edit_success)');
+                            }
+
+                            else {
+                                $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                            }
+                        });
+                    };
+                });
+            }
+            else {
+                $.messager.alert('@Html.Label(Resource.Error)', '@Html.Label(Resource.Please_select_the_process_station_first)');
+            }
+         });
+
+
+        var toolbarParam = [{
+            text:'@Html.Label(Resource.Update_work_step_parameters)' ,
+            iconCls: 'icon-edit',
+            handler: function () {
+                var row = $('#dgWorkStepParam').datagrid('getSelected');
+                if (row) {
+                    var ID = row.ID;
+                    $("#txtUpdateParamForm_ID").textbox('setValue', ID);
+                    $("#txtUpdateParamForm_ParamName").textbox('setValue', row.ParamName);
+                    $('#txtUpdateParamForm_ParamName').textbox('textbox').attr('readonly', true);
+                    $("#txtUpdateParamForm_ParamDesc").textbox('setValue', row.ParamDesc);
+                    $('#txtUpdateParamForm_ParamDesc').textbox('textbox').attr('readonly', true);
+                    $("#txtUpdateParamForm_ParamValue").textbox('setValue', row.ParamValue);
+
+                    $('#winUpdateParam').window('open');
+                }
+                else {
+                    $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Please_Select_the_parameters_to_update)' );
+                }
+            }
+
+        }];
+
+        $('#updateParam_Cancle').click(function () {
+            $('#winUpdateParam').window('close');
+        });
+        $('#btneditWorkStepCancle').click(function () {
+            $('#winEditWorkSetp').window('close');
+        });
+        $('#updateParam_Save').click(function () {
+            var param =
+                {
+                    ID: $("#txtUpdateParamForm_ID").textbox('getValue'),
+                    ParamValue: $("#txtUpdateParamForm_ParamValue").textbox('getValue')
+                };
+            var req = new Object();
+            req["param"] = JSON.stringify(param);
+            $.post("@Url.Action("updateWorkStepParam")", req, function (result) {
+                if (result.state == "success") {
+                    $('#winUpdateParam').window('close');
+                    var row = $('#dgWorkStep').datagrid('getSelected');
+                    if (row) {
+                        loadWorkStepParams(row.ID);
+                    }
+                    $.messager.alert('@Html.Label(Resource.Error)', '@Html.Label(Resource.Update_Success)');
+
+                }
+
+                else {
+                    $.messager.alert('@Html.Label(Resource.Error)', result.message, '@Html.Label(Resource.Error)');
+                }
+            });
+
+        }
+                )
+
+        $(document).ready(function () {
+            //station refresh
+            dgStationRefresh();
+
+            //set workStepType
+            $('#addWorkStep_WorkStepType').combogrid({
+                delay: 500,
+                mode: 'remote',
+                url: '@Url.Action("getPluignList")',
+                idField: 'PluginID',
+                textField: 'PluginName',
+                columns: [[
+                    { field: 'PluginID', title:'@Html.Label(Resource.Funciton_Code)' , width: 80, sortable: true },
+                    { field: 'PluginName', title:'@Html.Label(Resource.Funtion_Name)', width: 200, sortable: true }
+                ]]
+            });
+
+            //set workStepType
+            $('#editWorkStep_WorkStepType').combogrid({
+                delay: 500,
+                mode: 'remote',
+                url: '@Url.Action("getPluignList")',
+                idField: 'PluginID',
+                textField: 'PluginName',
+                columns: [[
+                    { field: 'PluginID', title:'@Html.Label(Resource.Funciton_Code)', width: 80, sortable: true },
+                    { field: 'PluginName', title:'@Html.Label(Resource.Funtion_Name)', width: 200, sortable: true }
+                ]]
+            });
+
+
+        });
+
+        //选择工序工艺加载工步
+        function loadWorkStepParams(workStepID) {
+            $('#dgWorkStepParam').datagrid({
+                url: "@Url.Action("getWorkStepParamsByStepID")?ID=" + workStepID,
+                method: 'POST',
+                dataType: 'json',//请求数据类型
+                striped: true,
+                fitColumns: true,
+                singleSelect: true,
+                rownumbers: true,
+                pagination: false,
+                nowrap: false,
+                showFooter: false,
+                columns: [[
+                           { field: 'ID', title:'@Html.Label(Resource.ID)', width: 140, align: 'left', hidden: 'true' },
+                           { field: 'ParamName', title:'@Html.Label(Resource.ParamName)', width: 120, align: 'left' },
+                           { field: 'ParamDesc', title: '@Html.Label(Resource.ParamDesc)', width: 150, align: 'left' },
+                           { field: 'ParamValue', title: '@Html.Label(Resource.ParamValue)', width: 140, align: 'left' }
+                ]]
+            });
+        }
+    </script>
+    <div id="cc" class="easyui-layout" style="width: 100%; height: 670px; padding: 0px;">
+
+        <div data-options="region:'north'" style="width: 100%; height: 80px;">
+            <table class="easyui-panel" title='@Html.Label(Resource.Basic_data)'style="height: 100%; width: 100%">
+                <tr>
+                    <td class="lbladdFormRoteCode">@Html.Label(Resource.Process_code):</td>
+                    <td class="field">
+                        <input id="txtaddForm_routeCode" name="addFrom_routeCode" class="easyui-textbox"
+                               value="@Model.RoteCode" data-options="required:true" readonly="true" />
+                    </td>
+                    <td class="lblAddFormRoteDesc">@Html.Label(Resource.Process_Desc):</td>
+                    <td class="field">
+                        <input id="addForm_RouteDesc" name="addForm_RouteDesc" class="easyui-textbox"
+                               value="@Model.RoteName" readonly="true" />
+                    </td>
+                </tr>
+                <tr style="display: none">
+                    <td>
+                        <input id="txtmodifyForm_ID" name="txtmodifyForm_ID" class="easyui-textbox" value="@Model.ID" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div data-options="region:'west',split:true" style="width: 430px; height: 70%">
+            <table class="easyui-datagrid" id="dgStation" title='@Html.Label(Resource.Rote_Station)'
+                   data-options="rownumbers:true,singleSelect:true,method:'get',toolbar:procStationBar">
+            </table>
+        </div>
+        <div data-options="region:'center'"title= '@Html.Label(Resource.info)'  style="height: 70%">
+            <table class="easyui-datagrid" style="width: 100%; height: 50%" id="dgWorkStep"
+                   data-options="rownumbers:true,singleSelect:true,method:'get',toolbar:toolbar">
+            </table>
+            <table class="easyui-datagrid" style="width: 100%; height: 50%" id="dgWorkStepParam"title= '@Html.Label(Resource.Step_Param)'
+                   data-options="rownumbers:true,singleSelect:true,method:'get',toolbar:toolbarParam">
+            </table>
+        </div>
+        <div data-options="region:'south'" class="easyui-panel" style="height: 40px; text-align: right; padding: 5px;">
+            <a id="btnRefresh" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-no'" onclick="refush()">@Html.Label(Resource.Close)</a>
+        </div>
+    </div>
+    <!--新增工艺工站-->
+    <div id="winAddStation" class="easyui-window" title='@Html.Label(Resource.Add_Rote_Station)' style="width: 350px; height: 220px"
+         data-options="iconCls:'icon-save',modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false">
+        <table class="info">
+            <tr>
+                <td class="label">@Html.Label(Resource.station_code):</td>
+                <td class="field">
+                    <input id="addStationForm_stationCode" name="addStationForm_stationCode" class="easyui-textbox" data-options="required:true" />
+                </td>
+            </tr>
+            <tr>
+                <td class="label">@Html.Label(Resource.Station_name) :</td>
+                <td class="field">
+                    <input id="addStationForm_stationName" name="addStationForm_PrinterName" class="easyui-textbox" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="label">@Html.Label(Resource.row_num) :</td>
+                <td class="field">
+                    <input id="addStationForm_ReqNo" name="addStationForm_PrinterServer" class="easyui-textbox" />
+                </td>
+            </tr>
+        </table>
+        <div style="padding: 5px; text-align: center;">
+            <a href="javascript:void(0)" id="addStationForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Add)</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" id="btnaddStaionCancle">@Html.Label(Resource.Cancel)</a>
+        </div>
+    </div>
+    <!--编辑工艺工站-->
+    <div id="winUpdateStation" class="easyui-window" title='@Html.Label(Resource.Edit_Rote_Station)' style="width: 350px; height: 220px"
+         data-options="iconCls:'icon-edit',modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false">
+        <table class="info">
+            <tr>
+                <td class="label">@Html.Label(Resource.station_code):</td>
+                <td class="field">
+                    <input id="editStationForm_stationCode" name="editStationForm_stationCode" class="easyui-textbox" data-options="required:true" />
+                </td>
+            </tr>
+            <tr>
+                <td class="label">@Html.Label(Resource.Station_name):</td>
+                <td class="field">
+                    <input id="editStationForm_stationName" name="editStationForm_stationName" class="easyui-textbox" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="label">@Html.Label(Resource.row_num) RowNum:</td>
+                <td class="field">
+                    <input id="editStationForm_ReqNo" name="editStationForm_ReqNo" class="easyui-textbox" />
+                </td>
+            </tr>
+        </table>
+        <div style="padding: 5px; text-align: center;">
+            <a href="javascript:void(0)" id="editStationForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Save)</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" id="btneditStaionCancle">@Html.Label(Resource.Cancel)</a>
+        </div>
+    </div>
+
+    <div id="winAddWorkSetp" class="easyui-window" title='@Html.Label(Resource.Add_Work_Setp)' style="width: 350px; height: 220px"
+         data-options="iconCls:'icon-save',modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false">
+        <table class="info">
+            <tr>
+                <td class="label">@Html.Label(Resource.Step_No):</td>
+                <td class="field">
+                    <input id="adWorkStep_WorkStepCode" name="adWorkStep_WorkStepCode" class="easyui-textbox" data-options="required:true" />
+                </td>
+            </tr>
+            <tr>
+                <td class="label">@Html.Label(Resource.Step_Name):</td>
+                <td class="field">
+                    <input id="adWorkStep_WorkStepName" name="adWorkStep_WorkStepName" class="easyui-textbox" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="label">@Html.Label(Resource.Step_Type):</td>
+                <td class="field">
+                    <input id="addWorkStep_WorkStepType" name="addWorkStep_WorkStepType" class="easyui-combogrid" />
+                </td>
+            </tr>
+        </table>
+        <div style="padding: 5px; text-align: center;">
+            <a href="javascript:void(0)" id="addWorkStep_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Add)</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" id="btnaddWorkStepCancle">@Html.Label(Resource.Cancel)</a>
+        </div>
+    </div>
+    <div id="winEditWorkSetp" class="easyui-window" title='@Html.Label(Resource.Edit_Work_Setp)' style="width: 350px; height: 220px"
+         data-options="iconCls:'icon-Edit',modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false">
+        <table class="info">
+            <tr>
+                <td class="label">@Html.Label(Resource.Step_No):</td>
+                <td class="field">
+                    <input id="editWorkStep_WorkStepCode" name="editWorkStep_WorkStepCode" class="easyui-textbox" data-options="required:true" />
+                </td>
+            </tr>
+            <tr>
+                <td class="label">@Html.Label(Resource.Step_Name):</td>
+                <td class="field">
+                    <input id="editWorkStep_WorkStepName" name="editWorkStep_WorkStepName" class="easyui-textbox" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="label">@Html.Label(Resource.Step_Type) :</td>
+                <td class="field">
+                    <input id="editWorkStep_WorkStepType" name="editWorkStep_WorkStepType" class="easyui-combogrid" />
+                </td>
+            </tr>
+        </table>
+        <div style="padding: 5px; text-align: center;">
+            <a href="javascript:void(0)" id="editWorkStep_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Save)</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" id="btneditWorkStepCancle"> @Html.Label(Resource.Cancel)</a>
+        </div>
+    </div>
+    <div id="winUpdateParam" class="easyui-window" title='@Html.Label(Resource.Update_work_step_parameters)' style="width: 350px; height: 220px"
+         data-options="iconCls:'icon-save',modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false">
+        <table class="info">
+            <tr>
+                <td class="field" style="display: none">
+                    <input id="txtUpdateParamForm_ID" name="txtUpdateParamForm_ID" class="easyui-textbox" data-options="required:true" />
+                </td>
+                <td class="label">@Html.Label(Resource.ParamName):</td>
+                <td class="field">
+                    <input id="txtUpdateParamForm_ParamName" name="txtUpdateParamForm_ParamName" class="easyui-textbox" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="label">@Html.Label(Resource.ParamDesc):</td>
+                <td class="field">
+                    <input id="txtUpdateParamForm_ParamDesc" name="txtUpdateParamForm_ParamDesc" class="easyui-textbox" />
+                </td>
+            </tr>
+            <tr>
+                <td class="label">@Html.Label(Resource.ParamValue):</td>
+                <td class="field">
+                    <input id="txtUpdateParamForm_ParamValue" name="txtUpdateParamForm_ParamValue" class="easyui-textbox" />
+                </td>
+            </tr>
+        </table>
+        <div style="padding: 5px; text-align: center;">
+            <a href="javascript:void(0)" id="updateParam_Save" class="easyui-linkbutton" icon="icon-save">@Html.Label(Resource.Save)</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" id="updateParam_Cancle">@Html.Label(Resource.Cancel) </a>
+        </div>
+    </div>
+</form>
+

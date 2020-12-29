@@ -1,0 +1,404 @@
+﻿@model YFPO.MES.Models.EMOrderModel
+@{
+    Layout = null;
+    List<YFPO.MES.Models.EMS_ControlTabs> controls = ViewBag.Controls as List<YFPO.MES.Models.EMS_ControlTabs>;
+}
+
+<script type="text/javascript">
+    $(function () {
+
+        var functionLocationCode = $("#FunctionLocationCode option:selected").text();
+        if (functionLocationCode.indexOf("模具") != -1 || functionLocationCode.indexOf("抓手") != -1) {
+            $("#MachinePos").attr("disabled", false);
+        } else {
+            $("#MachinePos").find("option").eq(0).prop("selected", true)
+            $("#MachinePos").attr("disabled", true);
+        }
+
+        $.ajaxSetup({
+            cache: false //关闭AJAX缓存
+        });
+        //开启表单验证
+        //var validator = $("#createForm").validate({ errorElement: "p" });
+        $("#createForm").validate();
+
+        //功能位置1下拉框
+        $("#SuperiorFunLocCode").change(function () {
+            //刷新功能位置2
+            $.get("@Url.Action("GetFunctionLocation")", { superiorFunLoc: $(this).val() }, function (result) {
+                $("#FunctionLocationCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#FunctionLocationCode"));
+                });
+            });
+            //刷新设备下拉框
+            $.get("@Url.Action("GetEquipByFunLoc")", { functionLocationCode: $(this).val() }, function (result) {
+                $("#SuperiorEquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#SuperiorEquipCode"));
+                });
+            });
+            //刷新子设备下拉框
+            $.get("@Url.Action("GetEquipLevelTwo")", { superiorEquipCode: $("#SuperiorEquipCode").val() }, function (result) {
+                $("#EquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#EquipCode"));
+                });
+            });
+        });
+        //功能位置2下拉框
+        $("#FunctionLocationCode").change(function () {
+            //刷新设备下拉框
+            $.get("@Url.Action("GetEquipByFunLoc")", { functionLocationCode: $(this).val() }, function (result) {
+                $("#SuperiorEquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#SuperiorEquipCode"));
+                });
+            });
+            //刷新子设备下拉框
+            $.get("@Url.Action("GetEquipLevelTwo")", { superiorEquipCode: $("#SuperiorEquipCode").val() }, function (result) {
+                $("#EquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#EquipCode"));
+                });
+            });
+            //当功能位置2为模具或者抓手时，机台位置为可选，否则为禁用状态
+            var functionLocationCode = $("#FunctionLocationCode option:selected").text();
+            if (functionLocationCode.indexOf("模具") != -1 || functionLocationCode.indexOf("抓手") != -1) {
+                $("#MachinePos").attr("disabled", false);
+            } else {
+                $("#MachinePos").find("option").eq(0).prop("selected", true)
+                $("#MachinePos").attr("disabled", true);
+            }
+        });
+        //设备下拉框
+        $("#SuperiorEquipCode").change(function () {
+            //刷新子设备下拉框
+            $.get("@Url.Action("GetEquipLevelTwo")", { superiorEquipCode: $(this).val() }, function (result) {
+                $("#EquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#EquipCode"));
+                });
+            });
+            GetHitchGroup($(this).val());
+        });
+
+        //子设备下拉框
+        $("#EquipCode").change(function () {
+            GetHitchGroup($(this).val());
+        });
+
+        //故障部件下拉框
+        $("#HitchPartGrpCode").change(function () {
+            GetHitchCode($(this).val(), $("#HitchPartCode"));
+        });
+        //故障现象下拉框
+        $("#HitchDescGrpCode").change(function () {
+            GetHitchCode($(this).val(), $("#HitchDescCode"));
+        });
+        //故障原因下拉框
+        $("#HitchReasionGrpCode").change(function () {
+            GetHitchCode($(this).val(), $("#HitchReasionCode"));
+        });
+        //checkbox更改时
+        $("#IsShutDown").change(function () {
+            var value = $(this).attr("checked") ? "True" : "False";
+            $(this).val(value);
+        });
+
+        //提交
+        $("#Submit").click(function () {
+            if (!$("#createForm").validate().form()) {
+                return;
+            }
+          
+            //更改停机时间需要写更改原因
+            if (parseFloat($("#HideShutDownTime").val()) != parseFloat($("#ShutDownTime").val())) {
+                if ($("#ChangeReason").val() == "") {
+                    $.messager.alert("错误！", "更改停机时间原因不能为空", "error");
+                    return;
+             
+                }
+            }
+            var startTime = $("#MaintainStartTime").val();
+            var endTime4 = $("#MaintainEndTime").val();
+            // var endTime = $("#MaintainEndTime").datetimebox('getValue');
+            var a = (Date.parse(endTime4) - Date.parse(startTime)) / 3600 / 1000;
+            if (a < 0) {
+                $.messager.alert("错误", "维修结束时间不能小于维修开始时间", "error");
+                return;
+            }
+            //如果是主管工程师，校验工单是否已关闭
+            if ($("#roleCode").val() == "EMSEngineerLead") {
+                $.get("@Url.Action("CheckStatus")", { orderCode: $("#OrderCode").val(), status: $("#Status").val() }, function (result) {
+                    if (result.state === "success") {
+                        $.messager.confirm("提示", "确定提交工单" + $("#OrderCode").val() + "?", function (r) {
+                            if (r) {
+                                submitDlg("createForm");
+                                return;
+                            }
+                        });
+                    } else {
+                        $.messager.alert("错误", "该工单已关闭", "error");
+                    }
+                });
+            }
+
+            else if ($("#Status").val = '4000') {
+                $.get("@Url.Action("CheckHasMainTime")", { OrderCode: $("#OrderCode").val() }, function (result) {
+                    if (result.state === "success") {
+                        $.messager.confirm("提示", "确定提交工单" + $("#OrderCode").val() + "?", function (r) {
+                            if (r) {
+                                submitDlg("createForm");
+                                return;
+                            }
+                        });
+                    }
+                    else {
+                        $.messager.alert("错误", "请在维修工界面，录入维修工时信息", "error");
+
+                    }
+                });
+            }
+    //            $.messager.confirm("提示", "确定提交工单" + $("#OrderCode").val() + "?", function (r) {
+    //                if (r) {
+    //                    submitDlg("createForm");
+    //                    return;
+    //    }
+    //})
+        });
+        //保存数据,不改变工单状态
+        $("#Save").click(function () {
+            //更改停机时间需要写更改原因
+            if (parseFloat($("#HideShutDownTime").val()) != parseFloat($("#ShutDownTime").val())) {
+                if ($("#ChangeReason").val() == "") {
+                    $.messager.alert("错误！", "更改停机时间原因不能为空", "error");
+                    return;
+                }
+            }
+            var data = {
+                entity: $("#createForm").serialize(),
+                role: $("#roleCode").val()
+            };
+            $.post("@Url.Action("SaveData")", $("#createForm").serialize(), function (result) {
+                if (result.state === "success") {
+                    closeDlg();
+                    refush();
+                } else {
+                    $.messager.alert("错误", "提交数据失败！", "error");
+                }
+            });
+        });
+        //生产班组长维修完成关闭工单
+        $("#MaintainComplete").click(function () {
+            $.messager.confirm("提示", "确定将工单" + $("#OrderCode").val() + "维修完成?", function (r) {
+                if (r) {
+                    $.post("@Url.Action("MaintainComplete")", $("#createForm").serialize(), function (result) {
+                        if (result.state === "success") {
+                            closeDlg();
+                            refush();
+                        } else {
+                            $.messager.alert("错误", "提交数据失败！", "error");
+                        }
+                    });
+                }
+            });
+        });
+        //生产班组长维修完成关闭工单
+        $("#MaintainProd").click(function () {
+            $.messager.confirm("提示", "确定将工单" + $("#OrderCode").val() + "维持生产?", function (r) {
+                if (r) {
+                    $.post("@Url.Action("MaintainProd")", $("#createForm").serialize(), function (result) {
+                        if (result.state === "success") {
+                            closeDlg();
+                            refush();
+                        } else {
+                            $.messager.alert("错误", "提交数据失败！", "error");
+                        }
+                    });
+                }
+            });
+        });
+        //维持生产关闭工单，生成PD工单
+        $("#GoToPD").click(function () {
+            if (!$("#createForm").validate().form()) {
+                return;
+            }
+            $.messager.confirm("提示", "确定将工单" + $("#OrderCode").val() + "转为PD工单并关闭?", function (r) {
+                if (r) {
+                    $.post("@Url.Action("GoToPD")", $("#createForm").serialize(), function (result) {
+                        if (result.state === "success") {
+                            closeDlg();
+                            refush();
+                        } else {
+                            $.messager.alert("错误", "提交数据失败！", "error");
+                        }
+                    });
+                }
+            });
+        });
+        //维修完成关闭EM工单，创建PD工单
+        $("#CreatePD").click(function () {
+            if (!$("#createForm").validate().form()) {
+                return;
+            }
+            $.messager.confirm("提示", "确定将工单" + $("#OrderCode").val() + "关闭，并创建PD工单?", function (r) {
+                if (r) {
+                    $.post("@Url.Action("CreatePD")", $("#createForm").serialize(), function (result) {
+                        if (result.state === "success") {
+                            closeDlg();
+                            refush();
+                        } else {
+                            $.messager.alert("错误", "提交数据失败！", "error");
+                        }
+                    });
+                }
+            });
+        });
+        //主管工程师驳回
+        $("#GoBack").click(function () {
+            if (!$("#createForm").validate().form()) {
+                return;
+            }
+            $.messager.confirm("提示", "确定驳回工单" + $("#OrderCode").val() + "?", function (r) {
+                if (r) {
+                    $.post("@Url.Action("GoBack")", $("#createForm").serialize(), function (result) {
+                        if (result.state === "success") {
+                            closeDlg();
+                            refush();
+                        } else {
+                            $.messager.alert("错误", "提交数据失败！", "error");
+                        }
+                    });
+                }
+            });
+        });
+        //取消
+        $("#Cancel").click(function () {
+            closeDlg();
+        });
+    });
+
+    function GetHitchGroup(equipCode) {
+        //故障部件组下拉框
+        $.get("@Url.Action("GetHitchGroup")", { equipCode: equipCode, type: "HitchPart" }, function (result) {
+            $("#HitchPartGrpCode").empty();
+            $.each(result, function (i, item) {
+                $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#HitchPartGrpCode"));
+            });
+        });
+        //故障现象组下拉框
+        $.get("@Url.Action("GetHitchGroup")", { equipCode: equipCode, type: "HitchDesc" }, function (result) {
+            $("#HitchDescGrpCode").empty();
+            $.each(result, function (i, item) {
+                $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#HitchDescGrpCode"));
+            });
+        });
+        //故障原因组下拉框
+        $.get("@Url.Action("GetHitchGroup")", { equipCode: equipCode, type: "HitchResion" }, function (result) {
+            $("#HitchReasionGrpCode").empty();
+            $.each(result, function (i, item) {
+                $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#HitchReasionGrpCode"));
+            });
+        });
+    }
+
+    function GetHitchCode(groupCode, obj) {
+        $.get("@Url.Action("GetCatalogCode")", { codeGroup: groupCode }, function (result) {
+            $(obj).empty();
+            $.each(result, function (i, item) {
+                $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($(obj));
+            });
+        });
+    }
+</script>
+<form action="@Url.Action("Edit")" method="post" id="createForm" >
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="HideShutDownTime" value="@Model.ShutDownTime"/>
+    <input type="hidden" id="Role" name="Role" value="@Model.Role"/>
+    <table class="info">
+        @foreach (var item in controls.Where(p => p.ControlType != 10))
+        {
+            if (item.IsDisplay)
+            {
+                <tr>
+                    <td class="label">@item.DisplayName
+                    </td>
+                    <td class="field">
+                        @if (item.IsEnabled)
+                        {
+                            switch (item.ControlType)
+                            {
+                                case 0:
+                                case 2:
+                                    @Html.EditorFromName(item.ControlName, item.Validate, (item.ControlType == 2), 200)
+                                    break;
+                                case 1:
+                                    @Html.DropDownFromName(item.ControlName, ViewData[item.ControlName] as List<SelectListItem>, item.Validate)
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            switch (item.ControlType)
+                            {
+                                case 0:
+                                case 2:
+                                    @Html.DisplayFromName(item.ControlName, 200, (item.ControlType == 2))
+                                    break;
+                                case 1:
+                                    @Html.DisplayDropDownFromName(item.ControlName, ViewData[item.ControlName] as List<SelectListItem>)
+                                    break;
+                            }
+
+                            @Html.HiddenFromName(item.ControlName)
+                        }
+                    </td>
+
+                    <td class="tip"></td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td>
+                        @Html.HiddenFromName(item.ControlName)
+                    </td>
+                </tr>
+            }
+        }
+
+
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                @foreach (var item in controls.Where(p => p.ControlType == 10 && p.IsDisplay))
+                {
+                    <a href="javascript:void(0)" class="easyui-linkbutton" style="margin: 5px;" id="@item.ControlName">@item.DisplayName</a>
+                }
+                @*<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitDlg('createForm')">提交</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDlg()">取消</a>*@
+            </td>
+            <td></td>
+        </tr>
+    </table>
+
+</form>
+
+<form action="@Url.Action("Upload")" method="post" enctype="multipart/form-data"> 
+
+ 选择上传图片： <input type="file" name="FileUpload1" id="FileUpload1"/>&nbsp;&nbsp;&nbsp;&nbsp;
+    <input type="submit" name="SubmitImage" id="SubmitImage" value="上传" /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+     @*<input type="button" id="Download" value="下载" />
+   <a href="@Url.Action("Download")">下 载</a>*@
+
+</form> 
+<script>
+
+    $(function () {
+        $('#Download').click(function () { 
+            window.location.href = '/EMOrder/Download';
+        });
+    });
+</script>

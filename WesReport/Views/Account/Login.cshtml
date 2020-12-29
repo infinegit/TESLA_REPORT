@@ -1,0 +1,144 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+@using Resources
+@ViewContext.RouteData.Values["controllerName"]
+@ViewContext.RouteData.Values["actionName"]
+<html>
+<head>
+
+    <title>Trace the error-proofing configuration</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+    @Scripts.Render("~/Scripts/jquery-1.8.2.min.js")
+    @Scripts.Render("~/EasyUI/jquery.easyui.min.js")
+    @Styles.Render("~/EasyUI/icon.css")
+    @Styles.Render("~/EasyUI/default/easyui.css")
+    <style type="text/css">
+        body {
+            font-family: Helvetica, sans-serif, sans-serif;
+            font-size: 13px;
+            border-top: none;
+           /* background-image: url('../Images/background1.jpg');*/
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-color: #ffffff;
+        }
+    </style>
+    <script type="text/javascript">
+        var companies = eval(@Html.Raw(@ViewBag.Companies));
+        $(function () {
+            $("#loginSubmit").click(submitForm);
+            $("#resetForm").click(clearForm);
+
+        });
+        function submitForm() {
+            $('#ff').form('submit', {
+                onSubmit: function () {
+                    return $(this).form('enableValidation').form('validate');
+                },
+                success: function (data) {
+
+                    var res = eval("(" + data + ")");
+                    if (res.Result == "1") {
+                        window.location.href = "@Url.Action("Index", "Home")";
+                    }
+                    else {
+                        $.messager.alert('error', res.Message);
+                    }
+                }
+            });
+        }
+
+        function clearForm() {
+            $('#ff').form('clear');
+        }
+        function GetFactories(record) {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("GetCompanyFactories")?url=' + record.CompanyUrl,
+                cache: false,
+                dataType: "json",
+                success: function (data) {
+                    if (data.state == 'success') {
+                        $("#factory").combobox("loadData", data.data);
+                    } else {
+                        alert(data.message);
+                    }
+                },
+                error: function (request, textStatus, errorThrown) {
+                    alert(request.responseText);
+                },
+                beforeSend: function () {
+                    var win = $.messager.progress({
+                        title: 'wait',
+                        msg: 'Loading factory...'
+                    });
+                },
+                complete: function (XMLHttpRequest, textStatus) {
+                    $.messager.progress('close');
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div style="width: 100%; text-align: center; margin-top: 150px;">
+        <div style="width: 400px; margin: auto;">
+
+            <div style="margin: 20px 0;"></div>
+            
+            <div class="easyui-panel" title="@Html.Label(Resource.Trace_Report_Login)" style="width: 400px; background-image: url(~/Images/background1.jpg)">
+                <div style="padding: 10px 60px 20px 60px">
+                    <form id="ff" class="easyui-form" action="@Url.Action("Login")" method="post" data-options="novalidate:true">
+                        <table cellpadding="5">
+                            <tr>
+                                <td>@Html.Label(Resource.User_name):</td>
+                                <td>
+                                    <input class="easyui-textbox" type="text" name="userAccount" data-options="required:true" style="width: 180px;" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>@Html.Label(Resource.Password):</td>
+                                <td>
+                                    <input class="easyui-textbox" type="password" name="userPassword" data-options="required:true" style="width: 180px;" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>@Resource.Commpany:</td>
+                                <td>
+                                    <input id="systemId" class="easyui-combobox" name="systemId" style="width: 180px;"
+                                           data-options="valueField:'CompanyUrl',
+                                                        textField:'CompanyName',
+                                                        data:companies,
+                                                        onSelect: function(rec){ GetFactories(rec); }" />
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>@Resource.Factory:</td>
+                                <td>
+                                    <input id="factory" name="factory" class="easyui-combobox" style="width: 180px;"
+                                           data-options="valueField:'FactoryCode',textField:'FactoryName'" />
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                    <div style="text-align: center; padding: 5px">
+                        <a href="javascript:void(0)" class="easyui-linkbutton" id="loginSubmit" icon="icon-ok">@Resource.Login</a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <a href="javascript:void(0)" class="easyui-linkbutton" id="resetForm" icon="icon-undo">@Resource.Rest &nbsp;&nbsp;</a>
+                    </div>
+                    <span>
+                       
+                        <a class="text-decoration-none lang" href="http://localhost:6672/zh-CN/@ViewContext.RouteData.Values["controller"]/@ViewContext.RouteData.Values["action"]/zh-CN">@Resource.Chinese</a>
+                        <a class="text-decoration-none lang" href="http://localhost:6672/en-US/@ViewContext.RouteData.Values["controller"]/@ViewContext.RouteData.Values["action"]/en-US">@Resource.English</a><br />
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

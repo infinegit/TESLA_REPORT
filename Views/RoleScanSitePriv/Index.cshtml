@@ -1,0 +1,112 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+@Scripts.Render("~/EasyUI/datagrid-detailview.js")
+@using Resources
+<div>
+    <table id="divSearch">
+        <tr>
+            <td>Role code：</td>
+            <td>
+                <input class="easyui-textbox" id="RoleCode" operator="LIKE" />
+            </td>
+            <td>Scan point code：</td>
+            <td>
+                <input class="easyui-textbox" id="ScanSiteCode" operator="LIKE" />
+            </td>
+            <td>
+                <a id="btnSearch" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'" onclick="">@Html.Label(Resource.Select)</a>
+                <a id="btnRefresh" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="refush()">@Html.Label(Resource.Refresh)</a>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="easyui-panel" id="toolbar" style="width:1500px">
+    <a id="add" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">@Html.Label(Resource.Add)</a>
+    <a id="modify" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">@Html.Label(Resource.Edit)</a>
+    <a id="delete" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">@Html.Label(Resource.Delete)</a>
+</div>
+<table id="datagrid" class="easyui-datagrid" style="height:500px;" toolbar="#toolbar" title="DC configuration information" data-options="singleSelect:true">
+</table>
+<script type="text/javascript">
+    //页面加载时
+    $(function () {
+        datagrid();
+    });
+    //查询
+    $('#btnSearch').click(function ()
+    {
+        //加载的数据
+        datagrid();
+    });
+    //数据绑定
+    function datagrid() {
+        Datagrid.ViewName = "SYS_RoleScanSitePriv";
+        Datagrid.SortColumn = "ID";
+        Datagrid.Columns = [[
+                           { field: 'ID', title: 'Serial number', width: '60px', align: 'center' },
+                           { field: 'RoleCode', title: 'Role code', width: '130px', align: 'center' },
+                           { field: 'ScanSiteCode', title: 'Scan point code', width: '160px', align: 'center' },
+                           { field: 'CreateUserAccount', title: 'Founder', width: '60px', align: 'center' },
+                           { field: 'CreateTime', title: 'Creation time', width: '140px', align: 'center' },
+                           { field: 'CreateMachine', title: 'Create machine name', width: '75px', align: 'center' },
+                           { field: 'LatestModifyUserAccount', title: 'Modified by', width: '60px', align: 'center' },
+                           { field: 'LatestModifyTime', title: 'Modification time', width: '140px', align: 'center' },
+                           { field: 'LatestModifyMachine', title: 'Modify machine name', width: '75px', align: 'center' }
+        ]];
+        Datagrid.URL = ("@Url.Action("GetReportData", "Report/Report")");
+        Datagrid.Search("#divSearch");
+    }
+    //刷新页面
+    function refush() {
+        document.location.reload();
+    }
+
+    //新增
+    $("#add").click(function () {
+        openDlg({
+            url: "@Url.Action("Add")",
+            title: "New information",
+            width: "300px",
+            height: "190px"
+        });
+    });
+
+    //修改
+    $("#modify").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert("Tips", "Please select the data to modify！");
+            return;
+        }
+        openDlg({
+            url: "@Url.Action("Modify")?ID=" + row.ID,
+            title: "Modify information",
+            width: "300px",
+            height: "190px"
+        });
+    });
+
+    //删除
+    $("#delete").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert("Tips", "Please select the data to delete！");
+            return;
+        }
+        $.messager.confirm("Tips", "Are you sure you want to delete this data？", function (r) {
+            if (r) {
+                $.post("@Url.Action("DeleteCfg")", { ID: row.ID }, function (result) {
+                    if (result.state == "success") {
+                        datagrid();
+                        $.messager.alert("Tips", "Deletion succeeded！");
+                    }
+                    else {
+                        $.messager.alert("Error", result.message, "error");
+                    }
+                });
+            }
+        });
+    });
+</script>

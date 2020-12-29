@@ -1,0 +1,87 @@
+﻿@{
+    Layout = null;
+}
+<script type="text/javascript">
+    $(function() {
+        $("#MaintainShift").change(function() {
+            $.get("@Url.Action("GetMaintainersByShiftID")", { shiftID: $(this).val() }, function (result) {
+                $("#MaintainUser").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#MaintainUser"));
+                });
+            });
+        });
+    });
+    function Create() {
+        $.messager.confirm("提示", "确定提交数据?", function (r) {
+            if (r) {
+                //对工号进行查重校验
+                $.get("@Url.Action("CheckMaintainer")", { orderCode: $("#OrderCode").val(), userAccount: $("#MaintainUser").val() }, function (r) {
+                    if (r.statue === "true") {
+                        $.messager.alert("错误", $("#MaintainUser option:selected").text() + "已存在");
+                    } else {
+                        $.post("@Url.Action("MaintainCreate")", $("#MaintainCreate").serialize(), function (data) {
+                            if (data.statue === "success") {
+                                $("#__easydlg").dialog('refresh', '@Url.Action("Maintainer")/?OrderCode=' + '@ViewBag.OrderCode');
+                            } else {
+                                $.messager.alert("错误", "创建失败", "error");
+                            }
+                        });
+                    }
+                });                
+            }
+        });
+    }
+
+    function Cancel() {
+        $("#__easydlg").dialog('refresh', '@Url.Action("Maintainer")/?OrderCode=' + '@ViewBag.OrderCode');
+    }
+</script>
+<form id="MaintainCreate">
+    <input type="hidden" id="OrderCode" name ="OrderCode" value="@ViewBag.OrderCode"/>
+    <table class="info">
+        <tr>
+            <td class="label">维修班组
+            </td>
+            <td class="field">
+                @Html.DropDownList("MaintainShift", ViewBag.MaintainShifts as List<SelectListItem>, new { style = "width:150px;" })
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">维修工
+            </td>
+            <td class="field">
+                @Html.DropDownList("MaintainUser", ViewBag.MaintainUsers as List<SelectListItem>, new { style = "width:150px;" })
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">维修开始时间
+            </td>
+            <td class="field">
+                <input class="easyui-datetimebox" id="MaintainStartTime" name="MaintainStartTime" style="width: 150px;" />
+            </td>
+
+            <td class="tip"></td>
+        </tr>
+@*        <tr>
+            <td class="label">维修结束时间
+            </td>
+            <td class="field">
+                <input class="easyui-datetimebox" id="MaintainEndTime" name="MaintainEndTime" style="width: 150px;" />
+            </td>
+
+            <td class="tip"></td>
+        </tr>*@
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="Create()">提交</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="Cancel()">取消</a>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+</form>

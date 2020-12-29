@@ -1,0 +1,64 @@
+﻿@{
+    ViewBag.Title = "AddStation";
+}
+@using Resources
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">@Html.Label(Resource.Station_coding) </td>
+            <td class="field">
+                <input id="addStationForm_stationCode" name="addStationForm_stationCode" class="easyui-textbox" data-options="required:true" />
+            </td>
+
+            <td class="label">@Html.Label(Resource.Station_name)</td>
+            <td class="field">
+                <input id="addStationForm_stationName" name="addStationForm_PrinterName" class="easyui-textbox" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.serial_number)</td>
+            <td class="field">
+                <input id="addStationForm_ReqNo" name="addStationForm_PrinterServer" class="easyui-textbox" />
+            </td>
+        </tr>
+    </table>
+    <div style="padding: 5px; text-align: center;">
+        <a href="javascript:void(0)" id="addStationForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Add)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    //提交数据
+    $('#addStationForm_Save').click(function () {
+        var StationCode = $("#addStationForm_stationCode").val();
+        var StationName = $("#addStationForm_stationName").val();
+        var ReqNo = $("#addStationForm_ReqNo").val();
+
+        if (stationCode == "")
+        {
+            $.messager.alert('@Html.Label(Resource.Add_failure)','@Html.Label(Resource.Printer_number_cannot_be_empty)');
+            return;
+        }
+        $.messager.confirm('@Html.Label(Resource.Tips)','@Html.Label(Resource.Confirm_submission)', function (r) {
+            if (r) {
+                var data =
+                    {
+                        StationCode: StationCode,
+                        StationName: StationName,
+                        ReqNo: ReqNo,
+                    };
+                $.post("@Url.Action("AddCfg")", data, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.Add_Success)');
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message, '@Html.Label(Resource.Error)');
+                    }
+                });
+            };
+        });
+    });
+</script>

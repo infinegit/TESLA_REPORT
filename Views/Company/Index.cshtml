@@ -1,0 +1,183 @@
+﻿@model IEnumerable<I.MES.Models.SYS_Company>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<form action="@Url.Action("Index")" method="post" id="indexForm">
+
+    <script type="text/javascript">
+        $(function () {
+            @*InitialDataGrid({
+                datatable:"datagrid",
+                toolbar: "toolbar",
+                total:@ViewBag.TotalRecords,
+                pageSize:@ConstInfo.PAGE_SIZE,
+                pageNumber:@ViewBag.PageNumber
+                });*@
+
+            $('#datagrid').datagrid({
+                height: 340,
+                url: '@Url.Action("GetCompanyList")',
+                method: 'POST',
+                striped: true,
+                fitColumns: true,
+                singleSelect: true,
+                rownumbers: true,
+                pagination: true,
+                nowrap: false,
+                toolbar: "toolbar",
+                total:@ViewBag.TotalRecords,
+                pageSize:@ConstInfo.PAGE_SIZE,
+                pageNumber:@ViewBag.PageNumber,
+                pageList: [10, 20, 50, 100, 150, 200],
+                showFooter: true,
+                //queryParams: { RoleCode: "" },
+                toolbar: "toolbar",
+                columns: [[
+                    { field: 'ID', checkbox: true },
+                    {
+                        field: 'CompanyCode', title: 'Company code', width: 120, align: 'left' },
+                    { field: 'CompanyName', title: 'Corporate name', width: 150, align: 'left' },
+                    { field: 'CompanyFullName', title: 'Company description', width: 100, align: 'left' }
+                  
+                       
+                ]]
+            });
+
+
+            $("#datagrid").datagrid({  
+                onClickRow: function (index, row) {  //easyui封装好的时间（被单机行的索引，被单击行的值）
+
+                    //需要传递的值
+                    $("#lblCompanyCode").html(row["CompanyCode"]);
+                    $("#txtCompanyName").val(row["CompanyName"]);
+                    $("#txtCompanyFullName").val(row["CompanyFullName"]);
+                    
+                }
+            });
+
+            $("#update").click(function(){
+               
+                var txtCompanyName=$("#txtCompanyName").val();
+                var txtCompanyFullName=$("#txtCompanyFullName").val();
+
+                if(isNullOrEmpty(txtCompanyName))
+                {
+                    $.messager.alert("Tips","Company name cannot be empty！");
+                    return 
+                }
+
+                if(isNullOrEmpty(txtCompanyFullName))
+                {
+                    $.messager.alert("Tips", "Company description cannot be empty！");
+                    return 
+                }
+
+                var row= $("#datagrid").datagrid('getSelected');
+              
+             @*   $.post("@Url.Action("Update")",{id:row.ID,CompanyName:txtCompanyName,CompanyFullName:txtCompanyFullName},function(result){
+                    if(result.state=="success"){
+                        //location.reload();
+                        refush();
+             
+                    }
+                    else{
+                        $.messager.alert("错误","更新失败！","error");
+                    }
+                });*@
+
+                $.ajax({ 
+                    type: "POST", //提交的类型 
+                    url: "@Url.Action("Update")",//提交地址 
+                    data: {id:row.ID,CompanyName:txtCompanyName,CompanyFullName:txtCompanyFullName},//参数 
+                    success: function(msg){ //回调方法 
+                        if(msg.state=="success")
+                        {
+                            
+                            alert("Update succeeded！");
+
+                            refush();
+                                                
+                        }else
+                        {
+                            alert("Fail");  
+                        }
+                    } 
+                });
+
+
+                function isNullOrEmpty(strVal) {
+                    if (strVal == '' || strVal == null || strVal == undefined) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+
+                $("#txtSearch").keydown(function(e){
+                    var keyCode;
+                    if (window.event) {
+                        keyCode = e.keyCode;
+                    }
+                    else if (e.which) {
+                        keyCode = e.which;
+                    }
+                    if (keyCode == 13) {
+                        $("#indexForm").attr("method","get");
+                        $("#indexForm").submit();
+                    }
+                });
+
+                $("#search").click(function(){
+                    $("#indexForm").attr("method","get");
+                    $("#indexForm").submit();
+                });
+
+            });
+
+          
+        })
+
+        function refush()
+        { 
+            $('#datagrid').datagrid('load', {
+
+            });
+
+        }
+    </script>
+    <div id="toolbar" style="width: 100%;">
+
+        <div style="margin: 10px 0;">
+
+            <span style="padding:0 5px">
+                Company code:<label id="lblCompanyCode"></label>
+            </span>
+        </div>
+
+        <div style="margin: 10px 0;">
+            <span style="padding: 0 5px;">
+                Corporate name：@Html.TextBox("txtCompanyName", "", new { style = "width:250px" })
+            </span>
+            <p></p>
+            <span style="padding: 0 5px;">
+                Company description：@Html.TextBox("txtCompanyFullName", "", new { style = "width:250px" })
+            </span>
+            <p></p>
+            <span style="padding: 0 5px;">
+                <a id="update" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-ok'"> Edit</a>
+            </span>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <span style="padding: 0 5px;">
+                <a id="cancle" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">Cancel</a>
+            </span>
+        </div>
+    </div>
+
+
+    <div>
+        <table id="datagrid" title="Information list" style="width: 100%; height: auto; border: 1px solid #ccc;">
+           
+        </table>
+    </div>

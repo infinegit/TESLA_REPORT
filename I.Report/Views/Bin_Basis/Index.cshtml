@@ -1,0 +1,161 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+
+
+<script type="text/javascript">
+
+    $(function () {
+
+        $("#add").click(function () {
+           
+            openDlg({
+                url: "@Url.Action("Edit")?id=0" ,
+                 title: "编辑",
+                 width: "800px",
+                 height: "400px"
+             });
+        });
+
+         $("#modify").click(function () {
+
+             var row = $("#datagrid").datagrid('getSelected');
+             if (row == null || row == undefined) {
+                 $.messager.alert("提示", "未选中任何行！");
+                 return;
+             }
+             openDlg({
+                 url: "@Url.Action("Edit")?id=" + row.ID,
+                title: "编辑",
+                width: "800px",
+                height: "400px"
+            });
+        });
+
+         $("#delete").click(function () {
+
+             var row = $("#datagrid").datagrid('getSelected');
+             if (row == null || row == undefined) {
+                 $.messager.alert("提示", "未选中任何行！");
+                 return;
+             }
+
+             $.messager.confirm("提示", "您确定要删除这条数据吗？", function (r) {
+                 if (r) {
+                     $.post("@Url.Action("Delete")", { id: row.ID }, function (result) {
+                        if (result.state == "success") {
+                            refresh();
+                        }
+                        else {
+                            $.messager.alert("错误", "删除失败！", "error");
+                        }
+                        
+                    });
+                }
+            });
+
+        });
+
+    });
+
+    function refresh() {
+        $(document).ready(function () {
+            BindGrid();
+            $("#btnSearch").click(function () {
+                Datagrid.Search("#divSearch");
+            });
+            
+        });
+    }
+  
+</script>
+<div id="toolbar" style="width: 100%;">
+
+
+    <a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">新增</a>
+    <a id="modify" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">修改</a>
+    <a id="delete" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">删除</a>
+
+</div>
+<table id="divSearch">
+    <tr>
+        <td>BIN位：</td>
+        <td>
+            <input class="easyui-combobox" id="BinCode" />
+        </td>
+       
+        <td>货架：</td>
+        <td>
+            <input class="easyui-combobox" id="ShelfCode" />
+        </td>
+        <td>
+            <a id="btnSearch" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'">查询</a>
+            <a id="btnExport" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-save'">导出</a>
+
+        </td>
+    </tr>
+</table>
+
+<div class="easyui-panel" title="Bin基础数据维护">
+    <table id="datagrid" data-options="singleSelect:true">
+    </table>
+</div>
+<script type="text/javascript">
+
+
+    $(document).ready(function () {
+        BindGrid();
+        $("#btnSearch").click(function () {
+            Datagrid.Search("#divSearch");
+        });
+        $('#BinCode').combobox({
+            url: '@Url.Action("GetBin")',
+            valueField: 'BinCode',
+            textField: 'BinName'
+
+        });
+        $('#ShelfCode').combobox({
+            url: '@Url.Action("GetShelfCodeList")',
+            valueField: 'ShelfCode',
+            textField: 'ShelfName'
+
+        });
+    });
+    function BindGrid() {
+
+        Datagrid.ViewName = "V_WMS_Bin_new";
+        Datagrid.SortColumn = "BinCode";
+
+        Datagrid.Columns = [[
+                     { field: 'ID', checkbox: true },
+                    { field: 'BinCode', title: 'BIN位号', width: 100, align: 'left' },
+                    { field: 'BinName', title: 'BIN位名称', width: 100, align: 'left' },
+                    { field: 'nEnabled', title: '是否启用', width: 100, align: 'left' },
+                    { field: 'nEquipCanIn', title: '允许设备上架', width: 100, align: 'left' },
+                    { field: 'nEquipCanOut', title: '允许设备下架', width: 100, align: 'left' },
+                    { field: 'RecommendSeq', title: '推荐顺序', width: 100, align: 'left' },
+                    { field: 'BinGroup', title: 'TS组', width: 100, align: 'left' },
+                    { field: 'Layer', title: 'TS层', width: 60, align: 'left' },
+                    { field: 'nIsVirtual', title: '是否虚拟', width: 60, align: 'left' },
+                    { field: 'nCanMix', title: '允许混放', width: 100, align: 'left' },
+                    { field: 'ShelfName', title: '属于货架', width: 60, align: 'left' },
+                    { field: 'WHCode', title: '属于仓库', width: 60, align: 'left' }
+
+        ]];
+        Datagrid.URL = "@Url.Action("GetReportData", "Report",new { area = "Report" })";
+
+        Datagrid.Init();
+
+    }
+
+
+   
+
+
+    $("#btnExport").click(function () {
+        Datagrid.Export("@Url.Action("ExportOut", "Report", new { area = "Report" })");
+    });
+</script>
+

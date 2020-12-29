@@ -1,0 +1,217 @@
+﻿@model YFPO.MES.Models.WMS_Bin
+@{
+    ViewBag.Title = "Edit";
+    
+}
+
+
+<script type="text/javascript">
+ 
+</script>
+<form action="@Url.Action("Edit")" method="post" id="editForm">
+    @Html.AntiForgeryToken()
+    <div id="Bin" class="easyui-panel" title="BIN位维护" style="width: 780px; height: 320px; padding: 10px;">
+
+        <table class="info">
+            <tr style="display: none">
+                <td class="label">映射代码
+                </td>
+                <td class="field">
+                    @Html.HiddenFor(model => model.CreateMachine)
+                    @Html.HiddenFor(model => model.CreateTime)
+                    @Html.HiddenFor(model => model.CreateUserAccount)
+                    @Html.HiddenFor(model => model.ID)
+                  
+
+                </td>
+
+            </tr>
+
+            <tr>
+                <td class="label">BIN位名称
+                </td>
+                <td class="field">
+                    @Html.TextBox("BinName")
+                  @*  <input id="EditBinName" name="BinName" value="@Model.BinName"/>
+                    @Html.HiddenFor(model => model.BinName)*@
+                </td>
+                <td class="label">BIN位号
+                </td>
+                <td class="field">
+                    
+                    <input id="eidtBinCode" name="BinCode" value="@Model.BinCode"/>
+                    @Html.HiddenFor(model => model.BinCode)
+
+
+                </td>
+                
+            </tr>
+            <tr>
+                <td class="label">TS组
+                </td>
+                <td class="field">
+                     @Html.TextBox("BinGroup")
+                    @*<input id="EditBinGroup" name="BinGroup" value="@Model.BinGroup"/>
+                    @Html.HiddenFor(model => model.BinGroup)*@
+                </td>
+                <td class="label">TS层
+                </td>
+                <td class="field">
+                     @Html.TextBox("Layer")
+                   @* <input id="EditLayer" name="PartLayer" value="@Model.Layer"/>
+                    @Html.HiddenFor(model => model.Layer)*@
+                </td>
+
+            </tr>
+            <tr>
+               @* <td class="label">属于仓库
+                </td>
+                <td class="field">
+                      <input id="EditWHCode" name="WHCode" value="@Model.WHCode"  />
+                    @Html.HiddenFor(model => model.WHCode)
+                </td>*@
+                <td class="label">属于货架
+                </td>
+                <td class="field">
+                  
+                    <input id="EditShelfCode" name="ShelfCode" value="@Model.ShelfCode"/>
+                    @Html.HiddenFor(model => model.ShelfCode)
+                </td>
+
+            </tr>
+            <tr>
+                <td class="label">推荐顺序
+                </td>
+                <td class="field">
+                    <input id="EditRecommendSeq" name="RecommendSeq" value="@Model.RecommendSeq"/>
+                    @Html.HiddenFor(model => model.RecommendSeq)
+
+                </td>
+                <td class="label">是否启用
+                </td>
+                <td class="field">
+                    @*<input type="checkbox" id="Enabled">*@
+                    @Html.CheckBoxFor(model => model.Enabled)
+                </td>
+
+            </tr>
+            <tr>
+
+                <td class="label">是否虚拟
+                </td>
+                <td class="field">
+                    @Html.CheckBoxFor(model => model.IsVirtual)
+                </td>
+                <td class="label">允许混放
+                </td>
+                <td class="field">
+                    @Html.CheckBoxFor(model => model.CanMix)
+                </td>
+            </tr>
+            <tr>
+
+                <td class="label">允许设备上架
+                </td>
+                <td class="field">
+                    @Html.CheckBoxFor(model => model.EquipCanIn)
+                </td>
+                <td class="label">允许设备下架
+                </td>
+                <td class="field">
+                    @Html.CheckBoxFor(model => model.EquipCanOut)
+                   
+                   
+                </td>
+            </tr>
+            
+            <tr>
+                <td colspan="2" style="text-align: center;">
+                    <a href="javascript:void(0)" id="submit" class="easyui-linkbutton">提交</a>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDlg()">取消</a>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </div>
+    <div style="margin: 20px 0;"></div>
+
+
+</form>
+
+<script type="text/javascript">
+    function refresh() {
+        $('#datagrid').datagrid();
+    }
+
+    $("#submit").click(function () {
+
+        $.messager.confirm("提示", "您确定要提交条数据吗？", function (r) {
+            if (r) {
+
+                var data =
+                {
+                    ID: $("#ID").val(),
+                    BinCode: $("#eidtBinCode").val(),
+
+                    BinName: $("#BinName").val(),
+                    BinGroup: $("#BinGroup").val(),
+                    Layer: $("#Layer").val(),
+                    ShelfCode: $("#EditShelfCode").combobox('getValue'),
+                    RecommendSeq: $("#EditRecommendSeq").val(),
+                    Enabled: $('[name=Enabled]:checked').val(),  
+                    EquipCanIn:$('[name=EquipCanIn]:checked').val(),
+                    EquipCanOut:$('[name=EquipCanOut]:checked').val(),
+                    IsVirtual: $('[name=IsVirtual]:checked').val(),
+                    CanMix: $('[name=CanMix]:checked').val()
+                  
+            };
+                $.post("@Url.Action("Update")", data, function(result) {
+                    if (result.state === "success") {
+                        $.messager.alert("提示", "操作成功！");
+                        closeDlg();
+                    } else {
+                        $.messager.alert("错误", result.state, "error");
+                    }
+                });
+
+
+            }
+        });
+
+    });
+
+
+    $(function() {
+
+        @*  $('#EditBinCode').combobox({
+            url: '@Url.Action("GetBin")',
+            valueField: 'BinCode',
+            textField: 'BinCode'
+        });*@
+
+        $('#EditBinName').combobox({
+            url: '@Url.Action("GetBin")',
+            valueField: 'BinCode',
+            textField: 'BinName'
+        });
+
+        $('#EditShelfCode').combobox({
+            url: '@Url.Action("GetShelfCodeList")?ShlfCode=""' ,
+            valueField: 'ShelfCode',
+            textField: 'ShelfName'
+
+        });
+
+        $('#EditWHCode').combobox({
+            url: '@Url.Action("GetShelfCodeList")?ShlfCode='+ $("#EditShelfCode").combobox('getValue'),
+            valueField: 'WHCode',
+            textField: 'WHCode'
+
+    });
+
+        
+
+    });
+
+</script>

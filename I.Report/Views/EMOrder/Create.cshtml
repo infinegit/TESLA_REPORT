@@ -1,0 +1,132 @@
+﻿@model YFPO.MES.Models.EMS_EMWorkOrder
+
+@{
+    ViewBag.Title = "EM工单创建";
+    List<YFPO.MES.Models.EMS_ControlTabs> controls = ViewBag.Controls as List<YFPO.MES.Models.EMS_ControlTabs>;
+}
+<script type="text/javascript">
+    $(function () {
+        $.ajaxSetup({
+            cache: false //关闭AJAX缓存
+        });
+        //开启表单验证
+        //var validator = $("#CreateEM").validate({ errorElement: "p" });
+        $("#CreateEM").validate();
+
+        //功能位置1下拉框
+        $("#SuperiorFunLocCode").change(function () {
+            //刷新功能位置2
+            $.get("@Url.Action("GetFunctionLocation")", { superiorFunLoc: $(this).val() }, function (result) {
+                $("#FunctionLocationCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#FunctionLocationCode"));
+                });
+            });
+            //刷新设备下拉框
+            $.get("@Url.Action("GetEquipByFunLoc")", { functionLocationCode: $(this).val() }, function (result) {
+                $("#SuperiorEquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#SuperiorEquipCode"));
+                });
+            });
+            //刷新子设备下拉框
+            $.get("@Url.Action("GetEquipLevelTwo")", { superiorEquipCode: $("#SuperiorEquipCode").val() }, function (result) {
+                $("#EquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#EquipCode"));
+                });
+            });
+        });
+        //功能位置2下拉框
+        $("#FunctionLocationCode").change(function () {
+            //刷新设备下拉框
+            $.get("@Url.Action("GetEquipByFunLoc")", { functionLocationCode: $(this).val() }, function (result) {
+                $("#SuperiorEquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#SuperiorEquipCode"));
+                });
+            });
+            //刷新子设备下拉框
+            $.get("@Url.Action("GetEquipLevelTwo")", { superiorEquipCode: $("#SuperiorEquipCode").val() }, function (result) {
+                $("#EquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#EquipCode"));
+                });
+            });
+        });
+        //设备下拉框
+        $("#SuperiorEquipCode").change(function () {
+            //刷新子设备下拉框
+            $.get("@Url.Action("GetEquipLevelTwo")", { superiorEquipCode: $(this).val() }, function (result) {
+                $("#EquipCode").empty();
+                $.each(result, function (i, item) {
+                    $("<option></option>").val(item["Value"]).text(item["Text"]).appendTo($("#EquipCode"));
+                });
+            });
+        });
+
+        //是否停机
+        $("#IsShutDown").change(function () {
+            var value = $(this).attr("checked") ? "True" : "False";
+            $(this).val(value);
+        });
+
+        //按钮事件
+        $("#Submit").click(function () {
+            if (!$("#CreateEM").validate().form()) {
+                return;
+            }
+            $.messager.confirm("提示", "确定提交?", function (r) {
+                if (r) {
+                    $.post("@Url.Action("Create")", $("#CreateEM").serialize(), function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        refush();
+                    } else {
+                        $.messager.alert("错误", "提交数据失败！", "error");
+                    }
+                });
+            };
+            });
+        });
+
+        $("#Cancel").click(function () {
+            closeDlg();
+        });
+    });
+</script>
+<form action="@Url.Action("Create")" method="post" id="CreateEM">
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    <table class="info">
+        @foreach (var item in controls.Where(p => p.ControlType != 10))
+        {
+            <tr>
+                <td class="label">@item.DisplayName
+                </td>
+                <td class="field">
+                    @switch (item.ControlType)
+                    {
+                        case 0:
+                        case 2:
+                        @Html.EditorFromName(item.ControlName, item.Validate, (item.ControlType == 2), 200)
+                            break;
+                        case 1:
+                        @Html.DropDownFromName(item.ControlName, ViewData[item.ControlName] as List<SelectListItem>, item.Validate)
+                            break;
+                    }
+                    @Html.ValidationMessageFor(model => model.OrderCode)
+                </td>
+                <td class="tip"></td>
+            </tr>
+        }
+        <tr>
+            <td colspan="2" style="text-align: center">
+                @foreach (var item in controls.Where(p => p.ControlType == 10))
+                {
+                    <a href="javascript:void(0)" class="easyui-linkbutton" style="margin:5px;" id="@item.ControlName">@item.DisplayName</a>
+                }
+            </td>
+        </tr>
+    </table>
+</form>

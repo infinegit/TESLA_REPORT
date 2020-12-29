@@ -1,0 +1,32 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+    <title>I制造执行系统[MESv3.0]</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    @Scripts.Render("~/Scripts/jquery-1.8.2.min.js")
+    @Scripts.Render("~/Scripts/jquery.validate.min.js")
+    @Scripts.Render("~/Scripts/jquery.metadata.js")
+    @Scripts.Render("~/EasyUI/jquery.easyui.min.js")
+    @Scripts.Render("~/Scripts/jquery.form.js")
+    @Scripts.Render("~/Scripts/global.js")
+    @Styles.Render("~/EasyUI/icon.css")
+    @Styles.Render("~/EasyUI/default/easyui.css")
+    @Styles.Render("~/Content/Site.css")
+    @Scripts.Render("~/Scripts/LodopFuncs.js?0531")
+    @Scripts.Render("~/Scripts/datagrid-filter.js")
+    <script>if (document&&document.documentElement) document.documentElement.focus();</script>
+</head>
+<body>
+
+
+
+    <noscript>
+        <div style="position: absolute; z-index: 100000; height: 2046px; top: 0px; left: 0px; width: 100%; background: white; text-align: center;">
+            <img src="@Url.Content("~/images/noscript.gif")" alt=' sorry，Please turn on script support！' />
+        </div>
+    </noscript>
+    <div style="width: 98%; margin: 5px auto;">
+        @RenderBody()
+    </div>
+</body>
+</html>

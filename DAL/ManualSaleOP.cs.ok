@@ -1,0 +1,120 @@
+﻿using DAL.Models;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using YFPO.MES.Library;
+using YFPO.MES.Models;
+
+/*****************************************************************************
+*-----------------------------------------------------------------------------
+*文 件 名: 
+*计算机名：MAZEN-PC
+*开发人员：(张茂忠)Mazen
+*创建时间：2016/3/11 9:30:21
+*描述说明：
+*
+*-----------------------------------------------------------------------------
+* 版   本： V1.0          修改时间：           修改人： 
+*更改历史：
+*
+*-----------------------------------------------------------------------------
+*Copyright (C) 20013-2015 东尚信息科技有限公司
+*-----------------------------------------------------------------------------
+******************************************************************************/
+namespace DAL
+{
+    /// <summary>
+    /// 手工销售出库
+    /// </summary>
+    public class ManualSaleOP : BaseOP
+    {
+        public LGS_SalesAgreement getSalesAgreement(string SaleAgrmNo)
+        {
+            LGS_SalesAgreement LGS_SalesAgreementInfo = null;
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    return LGS_SalesAgreementInfo = db.LGS_SalesAgreement.Where(p => p.SaleAgrmNo == SaleAgrmNo).FirstOrDefault();
+                }
+
+            }
+            catch (Exception)
+            {
+                return LGS_SalesAgreementInfo;
+            }
+        }
+        /// <summary>
+        /// 获取订单明细
+        /// </summary>
+        /// <param name="SaleAgrmNo"></param>
+        /// <param name="PageNumber"></param>
+        /// <param name="PageSize"></param>
+        /// <param name="total"></param>
+        /// <returns></returns>
+        public List<LGS_SalesAgreementModel> getSalesAgreementDetail(string SaleAgrmNo, int PageNumber, int PageSize, out int total)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    var item = from a in db.LGS_SalesAgreementDet
+                               where a.SaleAgrmNo == SaleAgrmNo
+                               select new LGS_SalesAgreementModel
+                               {
+                                   ID = a.ID,
+                                   ItemNo = a.ItemNo,
+                                   PlanItemNo = a.PlanItemNo,
+                                   SaleAgrmNo = a.SaleAgrmNo,
+                                   DeliveryDate = a.DeliveryDate,
+                                   PartNo = a.PartNo,
+                                   Qty = a.Qty,
+                                   DeliveryQty = a.DeliveryQty,
+                                   IsFreeze = a.IsFreeze,
+                                   Reserve1 = a.Reserve1,
+                                   LeaveQty = a.LeaveQty,
+                                   ShipmentQty = a.Qty - a.DeliveryQty
+
+                               };
+                    //var item = db.LGS_SalesAgreementDet.Where(p => p.SaleAgrmNo == SaleAgrmNo);
+                    total = item.Count();
+                    var data = item.OrderBy(p => p.SaleAgrmNo == SaleAgrmNo).Skip((PageNumber - 1) * PageSize).Take(PageSize);
+                    return data.ToList();
+                }
+
+            }
+            catch (Exception)
+            {
+                total = 0;
+                return null;
+            }
+        }
+        public bool UpdateSalesAgreementDet(int ID, decimal Count)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    LGS_SalesAgreementDet billDet = db.LGS_SalesAgreementDet.Where(p => p.ID == ID).FirstOrDefault();
+                    billDet.Qty = Count;
+                    db.LGS_SalesAgreementDet.Attach(billDet);
+                    db.Entry(billDet).State = EntityState.Modified;
+                    if (db.SaveChanges() > 0)
+                        return true;
+                    else
+                        return false;
+                }
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+       
+    }
+}

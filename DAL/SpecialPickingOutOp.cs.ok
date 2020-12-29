@@ -1,0 +1,442 @@
+﻿using DAL.Models;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+using YFPO.MES.Library;
+
+/*****************************************************************************
+*-----------------------------------------------------------------------------
+*文 件 名: 
+*计算机名：MAZEN-PC
+*开发人员：(张茂忠)Mazen
+*创建时间：2016/3/3 9:47:43
+*描述说明：
+*
+*-----------------------------------------------------------------------------
+* 版   本： V1.0          修改时间：           修改人： 
+*更改历史：
+*
+*-----------------------------------------------------------------------------
+*Copyright (C) 20013-2015 东尚信息科技有限公司
+*-----------------------------------------------------------------------------
+******************************************************************************/
+namespace DAL
+{
+    /// <summary>
+    /// 特殊领料出库
+    /// </summary>
+    public class SpecialPickingOutOp : BaseOP
+    {
+        /// <summary>
+        /// 查询领料单号
+        /// </summary>
+        /// <returns></returns>
+        public List<LGS_WFMMaterialReqBillModel> getBillNo()
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    var data = from a in db.LGS_WFMMaterialReqBill where a.IsPosted == false select new LGS_WFMMaterialReqBillModel() { BillNo = a.BillNo };
+                    return data.ToList();
+                }
+            }
+            catch (Exception)
+            {
+                return new List<LGS_WFMMaterialReqBillModel>();
+            }
+        }
+        /// <summary>
+        /// 获取库位清单
+        /// </summary>
+        /// <returns></returns> 
+        public List<WMS_StkMstrModel> getStkList()
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    var data = from a in db.WMS_StkMstr where a.Enabled == true select new WMS_StkMstrModel() { StkCode = a.StkCode, StkName = a.StkName };
+                    return data.ToList();
+                }
+            }
+            catch (Exception)
+            {
+                return new List<WMS_StkMstrModel>();
+            }
+        }
+        public LGS_WFMMaterialReqBill getBillNo(string BillNo)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    LGS_WFMMaterialReqBill data = db.LGS_WFMMaterialReqBill.Where(p => p.BillNo == BillNo).FirstOrDefault();
+                    return data;
+                }
+            }
+            catch (Exception)
+            {
+                return new LGS_WFMMaterialReqBill();
+            }
+        }
+        /// <summary>
+        /// 获取订单明细
+        /// </summary>
+        /// <param name="order">订单号</param>
+        /// <param name="PageNumber">当前页</param>
+        /// <param name="PageSize">一页显示的条数</param>
+        /// <param name="total">总数量</param>
+        /// <returns></returns>
+        public List<LGS_WFMMaterialReqBillDet> getBilMessageDeatil(string order, int PageNumber, int PageSize, out int total)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    var item = db.LGS_WFMMaterialReqBillDet.Where(p => p.BillNo == order);
+                    total = item.Count();
+                    var data = item.OrderBy(p => p.BillNo == order).Skip((PageNumber - 1) * PageSize).Take(PageSize);
+                    return data.ToList();
+                }
+            }
+            catch (Exception)
+            {
+                total = 0;
+                return new List<LGS_WFMMaterialReqBillDet>();
+            }
+        }
+        public List<LGS_WFMMaterialReqBillDet> getBilMessageDeatil(string order)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    var data = db.LGS_WFMMaterialReqBillDet.Where(p => p.BillNo == order);
+                    return data.ToList();
+                }
+            }
+            catch (Exception)
+            {
+                return new List<LGS_WFMMaterialReqBillDet>();
+            }
+        }
+        /// <summary>
+        /// 获取领料单条码绑定信息
+        /// </summary>
+        /// <param name="order"></param>
+        /// <returns></returns>
+        public List<LGS_WFMMaterialReqBarcode> getBindBarcodeMsg(string order, int PageNumber, int PageSize, out int total)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    var item = db.LGS_WFMMaterialReqBarcode.Where(p => p.BillNo == order);
+                    total = item.Count();
+                    var data = item.OrderBy(p => p.BillNo == order).Skip((PageNumber - 1) * PageSize).Take(PageSize);
+                    return data.ToList();
+
+                    //List<LGS_WFMMaterialReqBarcode> data = db.LGS_WFMMaterialReqBarcode.Where(p => p.BillNo == order).ToList();
+                    //return data;
+                }
+            }
+            catch (Exception)
+            {
+                total = 0;
+                return new List<LGS_WFMMaterialReqBarcode>();
+            }
+        }
+        /// <summary>
+        /// 绑定产品条码
+        /// </summary>
+        /// <param name="sn"></param>
+        /// <returns></returns>
+        public bool BindBarcode(LGS_WFMMaterialReqBarcode info, string sn, string CreateMachine, string CreateUserAccount)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                   // new LGSCommOP().OpenPackage(CreateMachine, sn);
+                    OpenPackage(sn, db, CreateMachine, CreateUserAccount);
+                    db.LGS_WFMMaterialReqBarcode.Add(info);
+                    int num = db.SaveChanges();
+                    if (num > 0)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+        public MFG_ProductBarcode getProductBarcode(string sn)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    return db.MFG_ProductBarcode.Where(p => p.Barcode == sn).FirstOrDefault();
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+        /// <summary>
+        /// 掏箱
+        /// </summary>
+        /// <param name="serialNum">条码</param>
+        public void OpenPackage(string serialNum, IMES3Entities db, string CreateMachine, string CreateUserAccount)
+        {
+            try
+            {
+                //解除条码与HU绑定关系
+                LGS_HUPkgDet huDet = db.LGS_HUPkgDet.Where(p => p.Barcode == serialNum).FirstOrDefault();
+                db.Set<LGS_HUPkgDet>().Remove(huDet);
+                LGS_HUPkgMstr huMstr = db.LGS_HUPkgMstr.Where(p => p.HUCode == huDet.HUCode).FirstOrDefault();
+                huMstr.HUQty -= 1;
+                db.LGS_HUPkgMstr.Attach(huMstr);
+                db.Entry(huMstr).State = EntityState.Modified;
+                //如果是最后一个条码，解除BIN位绑定关系，删除HUMstr 
+                if (db.LGS_HUPkgDet.Where(p => p.HUCode == huMstr.HUCode).Count() == 1)
+                {
+                    //生成下架记录并解除BIN位绑定信息
+                    WMS_ProductBinDet productBinDet = db.WMS_ProductBinDet.Where(p => p.Barcode == huMstr.HUCode).FirstOrDefault();
+                    if (productBinDet != null)
+                    {
+                        db.WMS_ProductBinDet.Remove(productBinDet);
+                        AddProductBinChangeLog(productBinDet, ConstInfo.BinChangeType.DownBin, db, CreateMachine, CreateUserAccount);
+                    }
+                    db.LGS_HUPkgMstr.Remove(huMstr);
+                }
+                #region 注释
+                //var huDet = GetData<LGS_HUPkgDet>(p => p.Barcode == serialNum);
+                //Delete<LGS_HUPkgDet>(huDet);
+
+                //var huMstr = GetData<LGS_HUPkgMstr>(p => p.HUCode == huDet.HUCode);
+                //huMstr.HUQty -= 1;
+                //Update<LGS_HUPkgMstr>(huMstr);
+
+                //如果是最后一个条码，解除BIN位绑定关系，删除HUMstr 
+                //if (!GetList<LGS_HUPkgDet>(p => p.HUCode == huMstr.HUCode).Any())
+                //{
+                //    //生成下架记录并解除BIN位绑定信息
+                //    WMS_ProductBinDet productBinDet = GetData<WMS_ProductBinDet>(p => p.Barcode == huMstr.HUCode);
+                //    AddProductBinChangeLog(productBinDet, ConstInfo.BinChangeType.DownBin);
+                //    Delete<WMS_ProductBinDet>(productBinDet);
+                //    Delete<LGS_HUPkgMstr>(huMstr);
+                //} 
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+        /// <summary>
+        /// 添加过账信息
+        /// </summary>
+        /// <param name="ReqBill"></param>
+        /// <param name="CreateMachine"></param>
+        /// <param name="CreateUserAccount"></param>
+        /// <returns></returns>
+        public bool Inser(LGS_WFMMaterialReqBillModel ReqBill, string CreateMachine, string CreateUserAccount)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    string outBillGuid =System.Guid.NewGuid().ToString();
+                    List<LGS_WFMMaterialReqBillDet> ListItem = getBilMessageDeatil(ReqBill.BillNo);
+                    //检查库存是否满足扣减量
+                    foreach (LGS_WFMMaterialReqBillDet item in ListItem)
+                    {
+                        if (!new StockOP().IsStockCheck(ReqBill.DeliveryFactory, item.DeliveryStk, item.PartNo, "", item.Qty, 
+                            ConstInfo.StkQualityStatus.OK,ConstInfo.StkMngStatusCode.Normal))
+                            return false;
+                    }  
+                    #region 增加出库记录
+                    WMS_StkOutMstr stkOutMstr = new WMS_StkOutMstr()
+                    {
+                        OutBillGuid = outBillGuid,
+                        TransTypeCode = "WFMMaterialReq",
+                        RefOrderGuid = ReqBill.BillNo,
+                        CreateUserAccount = CreateUserAccount,
+                        CreateMachine = CreateMachine,
+                        CreateTime = DateTime.Now
+                    };
+                    db.WMS_StkOutMstr.Add(stkOutMstr);
+                    foreach (LGS_WFMMaterialReqBillDet item in ListItem)
+                    {
+                        string QualityStatusCode =  ConstInfo.StkQualityStatus.OK;
+                        string StkMngStatusCode = ConstInfo.StkMngStatusCode.Normal;
+                        var stkOutDet = new WMS_StkOutDet()
+                        {
+                            OutBillGuid = outBillGuid,
+                            StkCode = item.DeliveryStk,//ReqBill.stkOut
+                            PartNo = item.PartNo,
+                            PartVersion = string.Empty,
+                            QualityStatusCode = QualityStatusCode,
+                            ParentPart = item.PartNo,
+                            StkMngStatusCode = StkMngStatusCode,
+                            Qty = item.Qty,
+                            IsBarcode = false,
+                            BarcodeType = string.Empty,
+                            Barcode = string.Empty,
+                            IsTransConfirmed = false,
+                            IsTransDone = false,
+                            IsTransSynced = false,
+                            WorkVer = string.Empty,
+                            ProdLineCode = string.Empty,
+                            CreateUserAccount = CreateUserAccount,
+                            CreateMachine = CreateMachine,
+                            CreateTime = DateTime.Now
+                        };
+                        db.WMS_StkOutDet.Add(stkOutDet);
+                    }
+                    #endregion
+
+                    #region 更新过账信息
+                    LGS_WFMMaterialReqBill ReqBillInfo = db.LGS_WFMMaterialReqBill.Where(p => p.BillNo == ReqBill.BillNo).FirstOrDefault();//WFM领料单是否过账
+                    ReqBillInfo.IsPosted = true;
+                    ReqBillInfo.EffDate = ReqBill.RemberEffDate;
+                    ReqBillInfo.ProcessTime = DateTime.Now;
+                    db.LGS_WFMMaterialReqBill.Attach(ReqBillInfo);
+                    db.Entry(ReqBillInfo).State = EntityState.Modified;
+
+                    //List<LGS_WFMMaterialReqBillDet> BillDetList = db.LGS_WFMMaterialReqBillDet.Where(p => p.BillNo == ReqBill.BillNo).ToList();
+                    //foreach (LGS_WFMMaterialReqBillDet item in BillDetList)//更新WFM领料单明细
+                    //{
+                    //    item.DeliveryStk = item.;
+                    //    db.LGS_WFMMaterialReqBillDet.Attach(item);
+                    //    db.Entry(item).State = EntityState.Modified;
+                    //}
+                    #endregion
+
+                    if (db.SaveChanges() > 0)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            catch (Exception ee)
+            {
+                return false;
+            }
+        }
+        public bool UpdateStk(int ID, string stkCode)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    LGS_WFMMaterialReqBillDet billDet = db.LGS_WFMMaterialReqBillDet.Where(p => p.ID == ID).FirstOrDefault();
+                    billDet.DeliveryStk = stkCode;
+                    db.LGS_WFMMaterialReqBillDet.Attach(billDet);
+                    db.Entry(billDet).State = EntityState.Modified;
+                    if (db.SaveChanges() > 0)
+                        return true;
+                    else
+                        return false;
+                }
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+        /// <summary>
+        /// 增加bin移动记录
+        /// </summary> 
+        /// <param name="det">bin对应关系</param>
+        /// <param name="changeType">移动类型</param>
+        private void AddProductBinChangeLog(WMS_ProductBinDet det, string changeType, IMES3Entities db, string CreateMachine, string CreateUserAccount)
+        {
+            try
+            {
+                Models.XBin xbin = GetXBin(det.Barcode, db);
+                WMS_ProductBinChangeLog log = new WMS_ProductBinChangeLog
+                {
+                    Barcode = det.Barcode,
+                    BarcodeType = det.BarcodeType,
+                    ShelfCode = xbin.Shelf.ShelfCode,
+                    BinChangeTypeCode = changeType.ToString(),
+                    GridNum = 1,
+                    WHCode = xbin.Shelf.WHCode,
+                    BinCode = xbin.Bin.BinCode,
+                    CreateUserAccount = CreateUserAccount,
+                    CreateMachine = CreateMachine,
+                    CreateTime = DateTime.Now
+                };
+
+                db.WMS_ProductBinChangeLog.Add(log);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public MFG_PartDetail getPartInfo(string partNo)
+        {
+            try
+            {
+                using (IMES3Entities db = new IMES3Entities())
+                {
+                    return db.MFG_PartDetail.Where(p => p.PartNo == partNo).FirstOrDefault();
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+        #region [根据条码获取Bin信息]
+        /// <summary>
+        /// 根据条码获取bin信息
+        /// </summary>
+        /// <param name="serialNum">条码</param>
+        /// <returns></returns> 
+        public Models.XBin GetXBin(string serialNum, IMES3Entities db)
+        {
+            Models.XBin xbin = new Models.XBin();
+            try
+            {
+                WMS_ProductBinDet bindet = db.WMS_ProductBinDet.Where(p => p.Barcode == serialNum).FirstOrDefault();
+                if (bindet != null)
+                {
+                    WMS_Bin bin = db.WMS_Bin.Where(p => p.BinCode == bindet.BinCode).FirstOrDefault();
+                    if (bin != null)
+                    {
+                        xbin.Bin = new WMS_Bin();
+                        xbin.Bin.CopyFrom(bin);
+                        WMS_Shelf shelf = db.WMS_Shelf.Where(p => p.ShelfCode == bin.ShelfCode).FirstOrDefault();
+                        if (shelf != null)
+                        {
+                            xbin.Shelf = new WMS_Shelf();
+                            xbin.Shelf.CopyFrom(shelf);
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return xbin;
+        }
+        #endregion
+
+    }
+}

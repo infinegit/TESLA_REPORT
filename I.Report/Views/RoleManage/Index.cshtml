@@ -1,0 +1,115 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+@Scripts.Render("~/EasyUI/datagrid-detailview.js")
+@using Resources
+<script src="~/EasyUI/layui/layui.js"></script>
+<div>
+    <table id="divSearch">
+        <tr>
+            <td>@Html.Label(Resource.User_role):</td>
+            <td>
+                <input class="easyui-textbox" id="RoleCode" />
+            </td>
+            <td>@Html.Label(Resource.User_name):</td>
+            <td>
+                <input class="easyui-textbox" id="RoleName" columnname="RoleName" operator="LIKE" />
+            </td>
+            <td>
+                <a id="btnSearch" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'" onclick="">@Html.Label(Resource.Select)</a>
+                <a id="btnRefresh" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="refush()">@Html.Label(Resource.Refresh)</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="easyui-panel" id="toolbar" style="width:1500px">
+    <a id="add" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">@Html.Label(Resource.Add)</a>
+    <a id="modify" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">@Html.Label(Resource.Edit)</a>
+    <a id="delete" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">@Html.Label(Resource.Delete)</a>
+</div>
+<table id="datagrid" class="easyui-datagrid" style="height:500px;" toolbar="#toolbar" title= '@Html.Label(Resource.Information_list)' data-options="singleSelect:true"></table>
+
+
+
+<script type="text/javascript">
+    $(function () {
+        datagrid();
+    });
+
+    //点击【查询】按钮
+    $("#btnSearch").click(function () {
+        datagrid();
+    });
+    //数据绑定
+    function datagrid() {
+        Datagrid.ViewName = "SYS_Role";
+        Datagrid.SortColumn = "ID";
+        Datagrid.Columns = [[
+                    { field: 'ID', title:'@Html.Label(Resource.serial_number)', width: '100px', align: 'center' },
+                    { field: 'RoleCode', title: '@Html.Label(Resource.Role_ID) ', width: '105px', align: 'center' },
+                    { field: 'RoleName', title: '@Html.Label(Resource.Role_name) ', width: '105px', align: 'center' },
+                    { field: 'RoleDesc', title: '@Html.Label(Resource.Role_description) ', width: '155px', align: 'center' },
+                    { field: 'CreateUserAccount',title:'@Html.Label(Resource.Founder)', width: '115px', align: 'center' },
+                    { field: 'CreateTime', title: '@Html.Label(Resource.Creation_time) ', sort: true, width: '145px', align: 'center' },
+                    { field: 'CreateMachine', title: '@Html.Label(Resource.Create_machine_name)', width: '145px', align: 'center' },
+                    { field: 'LatestModifyUser', title: '@Html.Label(Resource.Modified_by) ', width: '111px', align: 'center' },
+                    { field: 'LatestModifyTime', title: '@Html.Label(Resource.Modification_time) ', sort: true ,width: '150px', align: 'center' },
+                    { field: 'LatestModifyMachine', title: '@Html.Label(Resource.Modify_machine_name)', width: '160px', align: 'center' }
+        ]];
+        Datagrid.URL = ("@Url.Action("GetReportData", "Report/Report")");
+        Datagrid.Search("#divSearch");
+    }
+    //刷新页面
+    function refush() {
+        document.location.reload();
+    }
+
+    //新增
+    $("#add").click(function () {
+        openDlg({
+            url: "@Url.Action("Add")",
+            title: '@Html.Label(Resource.Add_role_information)',
+            width: "900px",
+            height: "410px"
+        });
+    });
+
+    //修改
+    $("#modify").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert( '@Html.Label(Resource.Tips)', '@Html.Label(Resource.Please_select_the_data_to_modify)');
+            return;
+        }
+        openDlg({
+            url: "@Url.Action("Modify")?ID=" + row.ID,
+            title:  '@Html.Label(Resource.Modify_role_information)',
+            width: "900px",
+            height: "410px"
+        });
+    });
+
+    //删除
+    $("#delete").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.Please_select_the_information_to_delete)');
+            return;
+        }
+        $.messager.confirm('@Html.Label(Resource.Tips)','@Html.Label(Resource.Are_you_sure_you_want_to_delete_this_data)', function (r) {
+            if (r) {
+                $.post("@Url.Action("DeleteCfg")", { ID: row.ID }, function (result) {
+                    if (result.state == "success") {
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Deletion_succeeded)');
+                    }
+                    else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message);
+                    }
+                });
+            }
+        });
+    });
+</script>

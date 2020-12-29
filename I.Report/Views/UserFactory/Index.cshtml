@@ -1,0 +1,125 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+@Scripts.Render("~/EasyUI/datagrid-detailview.js")
+@using Resources
+<div>
+    <table id="divSearch">
+        <tr>
+            <td>@Html.Label(Resource.User_account)</td>
+            <td>
+                <input class="easyui-textbox" id="UserAccount" />
+            </td>
+            <td>
+                <a id="btnSearch" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'" onclick="">@Html.Label(Resource.Select)</a>
+                <a id="btnRefresh" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="refush()">@Html.Label(Resource.Refresh)</a>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="easyui-panel" id="toolbar" style="width:1500px">
+    <a id="add" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">@Html.Label(Resource.Add)</a>
+    <a id="modify" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">@Html.Label(Resource.Edit)</a>
+    <a id="delete" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">@Html.Label(Resource.Delete)</a>
+</div>
+<table id="datagrid" class="easyui-datagrid" style="height:500px;" toolbar="#toolbar" title= '@Html.Label(Resource.DC_configuration_information)' data-options="singleSelect:true">
+</table>
+<script type="text/javascript">
+    //页面加载时
+    $(function () {
+        datagrid();
+    });
+    //查询
+    $('#btnSearch').click(function ()
+    {
+        //加载的数据
+        datagrid();
+    });
+    //数据绑定
+    function datagrid() {
+              Datagrid.ViewName = "SYS_UserFactoryPriv";
+              Datagrid.SortColumn = "ID";
+              Datagrid.Columns = [[
+                        { field: 'UserAccount', title: '@Html.Label(Resource.User_account)', width: '70px', align: 'center' },
+                        { field: 'FactoryCode', title:'@Html.Label(Resource.Factory_code)', width: '70px', align: 'center' },
+                        {
+                          field: 'Enabled', title: '@Html.Label(Resource.Enabled)', width: '70px', align: 'center',
+                          formatter: function (data) {
+                              if (data)
+                                  return "是";
+                              else
+                                  return "否";
+                          }
+                      },
+                      {
+                          field: 'IsDefault', title: '@Html.Label(Resource.Whether_Default_factory)', width: '85px', align: 'center',
+                          formatter: function (data) {
+                              if (data)
+                                  return "是";
+                              else
+                                  return "否";
+                          }
+                      },
+                          { field: 'CreateUserAccount', title:'@Html.Label(Resource.Founder)' , width: '60px', align: 'center' },
+                          { field: 'CreateTime', title: '@Html.Label(Resource.Creation_time)', width: '140px', align: 'center' },
+                          { field: 'CreateMachine', title:'@Html.Label(Resource.Create_machine_name)' , width: '75px', align: 'center' },
+                          { field: 'LatestModifyUserAccount', title:'@Html.Label(Resource.Modified_by)', width: '60px', align: 'center' },
+                          { field: 'LatestModifyTime', title: '@Html.Label(Resource.Modification_time)', width: '140px', align: 'center' },
+                          { field: 'LatestModifyMachine', title:'@Html.Label(Resource.Modify_machine_name)' , width: '75px', align: 'center' }
+        ]];
+        Datagrid.URL = ("@Url.Action("GetReportData", "Report/Report")");
+        Datagrid.Search("#divSearch");
+    }
+    //刷新页面
+    function refush() {
+        document.location.reload();
+    }
+
+    //新增
+    $("#add").click(function () {
+        openDlg({
+            url: "@Url.Action("Add")",
+            title:'@Html.Label(Resource.New_information)',
+            width: "300px",
+            height: "260px"
+        });
+    });
+
+    //修改
+    $("#modify").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.Please_select_the_data_to_modify)');
+            return;
+        }
+        openDlg({
+            url: "@Url.Action("Modify")?ID=" + row.ID,
+            title: '@Html.Label(Resource.Modify_information)',
+            width: "300px",
+            height: "260px"
+        });
+    });
+
+    //删除
+    $("#delete").click(function () {
+        var row = $("#datagrid").datagrid('getSelected');
+        if (row == null || row == undefined) {
+            $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.Please_select_the_information_to_delete)');
+            return;
+        }
+        $.messager.confirm('@Html.Label(Resource.Tips)','@Html.Label(Resource.Are_you_sure_you_want_to_delete_this_data)'", function (r) {
+            if (r) {
+                $.post("@Url.Action("DeleteCfg")", { ID: row.ID }, function (result) {
+                    if (result.state == "success") {
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.Deletion_succeeded)' );
+                    }
+                    else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                    }
+                });
+            }
+        });
+    });
+</script>

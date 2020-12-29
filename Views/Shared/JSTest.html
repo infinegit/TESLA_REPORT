@@ -1,0 +1,180 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <script src="../../Scripts/jquery-1.8.2.js" type="text/javascript"></script>
+    <script src="../../Scripts/jquery.bl.validate.js" type="text/javascript"></script>
+    <script type="text/javascript">
+
+        $(function () {
+            $.validator.addFunction({
+                account: {
+                    message: "不正确的账号名称",
+                    func: function () {
+                        var v = this.val();
+                        var r = /^[0-9a-zA-Z]+$/.test(v);
+                        return r;
+                    }
+                },
+                frist: {
+                    message: "第一个字母必须为{0}",
+                    func: function (char) {
+
+                        var v = this.val();
+
+                        if (v.indexOf(char) == 0) {
+                            return true;
+                        }
+                        else {
+                            this.message = this.format(char, char);
+                            return false;
+                        }
+                    }
+                }
+            });
+
+            $.validator.addFunction("frist", "第一个字母必须为{0}", function (char) {
+
+                var v = this.val();
+
+                if (v.indexOf(char) == 0) {
+                    return true;
+                }
+                else {
+                    this.message = this.format(char, char);
+                    return false;
+                }
+
+
+            });
+
+            var v = $("form").validate();//返回的v是一个Validator对象
+
+            v.addElement("#Text16", "account");   //v是第1步中返回的validator对象
+
+
+        });
+
+
+    </script>
+
+    <style>
+        div
+        {
+            padding: 5px;
+        }
+
+        .error
+        {
+            font-size: 12px;
+            color: red;
+            padding: 2px;
+        }
+
+        .inputerror
+        {
+            border: 1px dotted red;
+        }
+
+        .errorBlue
+        {
+            font-size: 12px;
+            color: blue;
+            padding: 2px;
+        }
+    </style>
+
+</head>
+<body style="margin: 0px;">
+
+    <form action="http://www.baidu.com" method="get">
+
+        <div style="margin: 12px;">
+            <div>
+                Required:
+                <input type="text" value="" id="tt" name="tt" data-validate="required" />
+            </div>
+            <div>
+                Required:
+                <select data-validate="required">
+                    <option value="">-请选择-</option>
+                    <option value="1">第一项</option>
+                    <option value="2">第一项</option>
+                </select>
+            </div>
+            <div>
+                Email: 
+                <input type="text" value="" id="Text1" name="tt" data-validate="email" />
+            </div>
+            <div id="dd">
+                minLength:
+                <input type="text" value="" id="Text2" name="tt" data-validate="minlength(4);{target:'#dd'}" /><div class="tip">tip</div>
+            </div>
+            <div>
+                url:
+                <input type="text" value="" id="Text3" name="tt" data-validate="url" />
+            </div>
+            <div>
+                date:
+                <input type="text" value="" id="Text4" name="tt" data-validate="date" />
+            </div>
+            <div>
+                dateISO:
+                <input type="text" value="" id="Text5" name="tt" data-validate="dateISO" />
+            </div>
+            <div>
+                number:
+                <input type="text" value="" id="Text6" name="tt" data-validate="number" />
+            </div>
+            <div>
+                digits:
+                <input type="text" value="" id="Text7" name="tt" data-validate="digits" />
+            </div>
+            <div>
+                equalTo:
+                <input type="text" value="" id="Text8" name="tt" data-validate="equalTo('#tt')" />
+            </div>
+            <div>
+                maxlength:
+                <input type="text" value="" id="Text9" name="tt" data-validate="maxlength(4)" />
+            </div>
+            <div>
+                rangelength:
+                <input type="text" value="" id="Text10" name="tt" data-validate="rangelength(4,8)" />
+            </div>
+            <div>
+                range:
+                <input type="text" value="" id="Text11" name="tt" data-validate="range('100','120')" />
+            </div>
+            <div>
+                max:
+                <input type="text" value="" id="Text12" name="tt" data-validate="max('k')" />
+            </div>
+            <div>
+                min:
+                <input type="text" value="" id="Text13" name="tt" data-validate="min('k')" />
+            </div>
+            <div>
+                account:
+                <input type="text" value="" id="Text14" name="tt" data-validate="account" />
+            </div>
+            <div>
+                frist:
+                <input type="text" value="" id="Text15" name="tt" data-validate="frist('abc')" />
+            </div>
+            <div>
+                NONE:
+                <input type="text" value="" id="Text16" name="tt" />
+            </div>
+            <div>
+
+                <input type="submit" value="提交" />
+
+            </div>
+
+        </div>
+    </form>
+
+</body>
+</html>

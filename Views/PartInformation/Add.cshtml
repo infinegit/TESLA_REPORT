@@ -1,0 +1,212 @@
+﻿@{
+    ViewBag.Title = "Add";
+}
+@using Resources
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">@Html.Label(Resource.PartNo):</td>
+            <td class="field">
+                <input id="addForm_PartNo" name="addForm_PartNo" class="easyui-textbox" data-options="required:true" />
+            </td>
+
+            <td class="label">@Html.Label(Resource.MeterialDescrition):</td>
+            <td class="field">
+                <input id="addForm_MeterialDescrition" name="addForm_MeterialDescrition" class="easyui-textbox" data-options="required:true" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.VehicleMode):</td>
+            <td class="field">
+                <input id="addForm_VehicleMode" name="addForm_VehicleMode" class="easyui-combobox" />
+            </td>
+
+            <td class="label">@Html.Label(Resource.ProjectName):</td>
+            <td class="field">
+                <input id="addForm_ProjectName" name="addForm_ProjectName" class="easyui-textbox" data-options="required:true" />
+            </td>
+
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.PartLevel):</td>
+            <td class="field">
+                <input id="addForm_PartLevel" name="addForm_PartLevel" class="easyui-textbox" data-options="required:true" />
+            </td>
+            <td class="label">@Html.Label(Resource.Partial_description):</td>
+            <td class="field">
+                <input id="addForm_PartDescription" name="addForm_PartDescription" class="easyui-textbox" data-options="required:true" />
+            </td>
+        </tr>
+
+        @*   <tr>
+                <td class="label">类型1</td>
+                <td class="field">
+                    <input id="addForm_Category1" name="addForm_Category1" class="easyui-combobox" />
+                </td>
+
+                <td class="label">类型2</td>
+                <td class="field">
+                    <input id="addForm_Category2" name="addForm_Category2" class="easyui-combobox" />
+                </td>
+
+                <td class="label">类型3</td>
+                <td class="field">
+                    <input id="addForm_Category3" name="addForm_Category3" class="easyui-combobox" />
+                </td>
+            </tr>*@
+
+        @* <tr>
+                <td class="label">零件颜色</td>
+                <td class="field">
+                    <input id="addForm_ColorCode" name="addForm_ColorCode" class="easyui-textbox" />
+                </td>
+
+                <td class="label">前景色</td>
+                <td class="field">
+                    <input id="addForm_ForeColor" name="addForm_ForeColor" class="easyui-textbox" />
+                </td>
+
+                <td class="label">背景色</td>
+                <td class="field">
+                    <input id="addForm_BackColor" name="addForm_BackColor" class="easyui-textbox" />
+                </td>
+            </tr>*@
+
+
+    </table>
+    <div style="padding: 15px; text-align: center;">
+        <a href="javascript:void(0)" id="addForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Add)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(function () {
+       @* //零件号版本
+        $('#addForm_PartVersion').combobox({
+            url: '@Url.Action("GetAllPartVersionList")',
+            valueField: 'PartVersion',
+            textField: 'PartVersionName'
+        });
+        //子零件号版本
+        $('#addForm_CompPartVersion').combobox({
+            url: '@Url.Action("GetAllPartVersionList")',
+            valueField: 'PartVersion',
+            textField: 'PartVersionName'
+        });
+        //产品类别
+        $('#addForm_ProduceCategory').combobox({
+            url: '@Url.Action("GetAllProduceCategoryList")',
+            valueField: 'ProduceCtgyCode',
+            textField: 'CategoryName'
+        });*@
+       @* //零件层级
+        $('#addForm_ProduceLevel').combobox({
+            url: '@Url.Action("GetAllProduceLevelList")',
+            valueField: 'ProduceLevelCode',
+            textField: 'ProduceLevelName'
+        });*@
+        //车型
+        $('#addForm_VehicleMode').combobox({
+            url: '@Url.Action("GetAllVehicleModeList")',
+            valueField: 'VehicleMode',
+            textField: 'VehicleName'
+        });
+      @*  //类别1
+        $('#addForm_Category1').combobox({
+            url: '@Url.Action("GetPartCategory1List")',
+            valueField: 'CategoryCode',
+            textField: 'CategoryName'
+        });
+        //类别2
+        $('#addForm_Category2').combobox({
+            url: '@Url.Action("GetPartCategory2List")',
+            valueField: 'CategoryCode',
+            textField: 'CategoryName'
+        });
+        //类别3
+        $('#addForm_Category3').combobox({
+            url: '@Url.Action("GetPartCategory3List")',
+            valueField: 'CategoryCode',
+            textField: 'CategoryName'
+
+        });
+        //缺陷类型
+        $('#addForm_DefectListCode').combobox({
+            url: '@Url.Action("GetAllDefectList")',
+            valueField: 'ListCode',
+            textField: 'ListName'
+        });
+        //BoardCategory chenyi 2018-05-02
+        $('#addForm_BoardCategory').combobox({
+            url: '@Url.Action("GetAllProduceCategoryList")',
+            valueField: 'ProduceCtgyCode',
+            textField: 'CategoryName'
+        });*@
+
+    });
+
+    //提交数据
+    $('#addForm_Save').click(function () {
+        var PartNo = $("#addForm_PartNo").val();
+        //  var PartVersion = $("#addForm_PartVersion").combobox('getValues')[0];
+        var MeterialDescrition = $("#addForm_MeterialDescrition").val();
+
+
+        var ProjectName = $("#addForm_ProjectName").val();
+
+        var PartLevel = $("#addForm_PartLevel").val();
+
+        var VehicleMode = $("#addForm_VehicleMode").combobox('getValues')[0];
+
+        var PartDescription = $("#addForm_PartDescription").val();
+
+
+        if (PartNo == "") {
+            $.messager.alert('@Html.Label(Resource.Add_failure)','@Html.Label(Resource.The_PartNo_cannot_be_empty)');
+            return;
+        }
+        if (MeterialDescrition == "") {
+            $.messager.alert('@Html.Label(Resource.Add_failure)','@Html.Label(Resource.The_Material_cannot_be_empty)');
+            return;
+        }
+        if (ProjectName == "") {
+            $.messager.alert('@Html.Label(Resource.Add_failure)','@Html.Label(Resource.The_ProjectName_cannot_be_empty)');
+            return;
+        }
+        if (PartLevel == "") {
+            $.messager.alert('@Html.Label(Resource.Add_failure)','@Html.Label(Resource.The_PartLevel_cannot_be_empty)' );
+            return;
+        }
+        if (PartDescription == "") {
+            $.messager.alert('@Html.Label(Resource.Add_failure)','@Html.Label(Resource.The_PartDescription_cannot_be_empty)');
+            return;
+        }
+        $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_Sure_to_submit)', function (r) {
+            if (r) {
+                var req = new Object();
+                var data =
+                    {
+                        PartNo: PartNo,
+                        MeterialDescrition: MeterialDescrition,
+                        ProjectName: ProjectName,
+                        PartLevel: PartLevel,
+                        VehicleMode:VehicleMode,
+                        PartDescription: PartDescription
+                    };
+                req["part"] = JSON.stringify(data);
+                $.post("@Url.Action("AddPart")", req, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Add_Success)');
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message,'@Html.Label(Resource.Error)');
+                    }
+                });
+            };
+        });
+    });
+</script>

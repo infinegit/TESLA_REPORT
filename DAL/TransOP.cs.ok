@@ -1,0 +1,204 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+
+namespace DAL
+{
+    /// <summary>
+    /// 移库单操作类
+    /// </summary>
+    public class TransOP : BaseOP
+    {
+        #region[数据获取]
+        public TransOP(string CompanyCode)
+        {
+            CompanyCode = CompanyCode;
+        }
+        /// <summary>
+        /// 获取移动单业务类型
+        /// </summary>
+        /// <returns></returns>
+        public List<SYS_GlobalDic> GetToType()
+        {
+            return GetSysGlobalDicList("ToType");
+        }
+        /// <summary>
+        /// 获取移库单事物类型
+        /// </summary>
+        /// <returns></returns>
+        public List<SYS_GlobalDic> GetTransType()
+        {
+            return GetSysGlobalDicList("TransType");
+        }
+        /// <summary>
+        /// 根据字典编码获取字典集合
+        /// </summary>
+        /// <param name="codeName">集合</param>
+        /// <returns></returns>
+        private List<SYS_GlobalDic> GetSysGlobalDicList(string codeName)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                return db.SYS_GlobalDic.Where(p => p.CodeName == codeName).ToList();
+            }
+        }
+        /// <summary>
+        /// 获取工厂集合
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetFactory()
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var data = from a in db.SYS_Factory
+                           select new SelectListItem()
+                           {
+                               Text = a.FactoryName,
+                               Value = a.FactoryCode
+                           };
+                return data.ToList();
+            }
+        }
+        /// <summary>
+        /// 根据工厂获取库位
+        /// </summary>
+        /// <param name="factoryCode">工厂</param>
+        /// <returns></returns>
+        public List<SelectListItem> GetStkByFactoryCode(string factoryCode)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var data = from a in db.WMS_StkMstr
+                           where a.FactoryCode == factoryCode
+                           select new SelectListItem()
+                           {
+                               Text = a.StkName,
+                               Value = a.StkCode
+                           };
+                return data.ToList();
+
+            }
+        }
+        /// <summary>
+        /// 根据移库单号获取移库单明细
+        /// </summary>
+        /// <param name="orderNo">订单号</param>
+        /// <returns></returns>
+        public List<WMS_TODet> GetTODetByOrderNo(string orderNo)
+        {
+            var data = GetList<WMS_TODet>(p => p.TOGuid == orderNo);
+            return data.ToList();
+        }
+        /// <summary>
+        /// 根据移库单号获取移库单
+        /// </summary>
+        /// <param name="orderNo">订单号</param>
+        /// <returns></returns>
+        public WMS_TOMstr GetTOMstrModel(string orderNo)
+        {
+            return GetData<WMS_TOMstr>(p => p.TOGuid == orderNo);
+
+        }
+        
+        #endregion
+        #region[操作]
+        /// <summary>
+        /// 创建TO主表
+        /// </summary>
+        /// <param name="toMstr">TO主表数据</param>
+        /// <returns></returns>
+        public int CreateTOMstr(WMS_TOMstr toMstr)
+        {
+            Insert<WMS_TOMstr>(toMstr);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 根据ID获取TO明细
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public WMS_TODet GetToDetByID(int id)
+        {
+            return GetData<WMS_TODet>(p => p.ID == id);
+        }
+        /// <summary>
+        /// 更新移库单 
+        /// </summary>
+        /// <param name="toMstr">移库单</param>
+        /// <returns></returns>
+        public int UpdateTOMstr(WMS_TOMstr toMstr)
+        {
+            Update<WMS_TOMstr>(toMstr);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 检查移库单是否存在
+        /// </summary>
+        /// <param name="toGuid">移库单单号</param>
+        /// <returns></returns>
+        public bool IsExistTOMst(string toGuid)
+        {
+            return DB.WMS_TOMstr.Any(p => p.TOGuid == toGuid);
+        }
+        /// <summary>
+        /// 是否存在零件
+        /// </summary>
+        /// <param name="partNo"></param>
+        /// <returns></returns>
+        public bool IsExistPartNo(string partNo)
+        {
+            return DB.MFG_PartDetail.Any(p => p.PartNo == partNo);
+        }
+        /// <summary>
+        /// 创建移库单明细
+        /// </summary>
+        /// <param name="toDet">移库单明细</param>
+        /// <returns></returns>
+        public int CreateTODet(WMS_TODet toDet)
+        {
+            Insert<WMS_TODet>(toDet);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 更新TO明细表
+        /// </summary>
+        /// <param name="toDet">TO明细数据</param>
+        /// <returns></returns>
+        public int UpdateTODet(WMS_TODet toDet)
+        {
+            Update<WMS_TODet>(toDet);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 删除TO明细
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public int DelTODet(int id)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.WMS_TODet.FirstOrDefault(p => p.ID == id);
+                if (item != null)
+                {
+                    db.WMS_TODet.Remove(item);
+                }
+                return db.SaveChanges();
+            }
+        }
+        /// <summary>
+        /// 检查TO明细是否存在
+        /// </summary>
+        /// <param name="toGuid">移库单号</param>
+        /// <param name="partNo">零件号</param>
+        /// <returns></returns>
+        public bool IsExistToDet(string toGuid, string partNo)
+        {
+            return DB.WMS_TODet.Any(p => p.TOGuid == toGuid && p.PartNo == partNo);
+        }
+        #endregion
+    }
+}

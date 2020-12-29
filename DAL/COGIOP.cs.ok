@@ -1,0 +1,223 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DAL
+{
+    public class COGIOP : BaseOP
+    {
+        public COGIOP(string CompanyCode)
+        {
+            CompanyCode = CompanyCode;
+        }
+
+        /// <summary>
+        /// 获得COGI主数据记录
+        /// </summary>
+        /// <param name="pageNumber">页号</param>
+        /// <param name="pageSize">每页行数</param>
+        /// <param name="total">总行数</param>
+        /// <returns></returns>
+        public IEnumerable<WMS_COGI> GetCOGIList(int pageNumber, int pageSize, out int total)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.WMS_COGI.Where(p => p.IsDel == false && p.IsPost == false && p.FactoryCode == CompanyCode).ToList();
+                total = item.Count;
+                var data = item.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+                return data.ToList();
+            }
+        }
+        /// <summary>
+        /// 删除未处理的数据
+        /// </summary>
+        /// <returns></returns>
+        public int DeleteCOGI(string[] cogiList)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                //标记已删除COGI主记录（WMS_COGI),SAP未决事务记录（SAPTransactionPending),库存待变更记录（StkChangePending）
+                foreach (string cogi in cogiList)
+                {
+                    WMS_COGI wmsCogi = db.WMS_COGI.FirstOrDefault(p => p.CogiGUID == cogi && p.FactoryCode == CompanyCode);
+                    wmsCogi.IsDel = true;
+                    WMS_SAPTransactionPending sapTP = db.WMS_SAPTransactionPending.FirstOrDefault(p => p.CogiGUID == cogi);
+                    sapTP.IsDel = true;
+
+                    List<WMS_StkChangePending> stkCPList = db.WMS_StkChangePending.Where(p => p.CogiGUID == cogi && p.FactoryCode == CompanyCode).ToList();
+                    foreach (WMS_StkChangePending stkCP in stkCPList)
+                    {
+                        WMS_StkChangePending wmsStkCP = db.WMS_StkChangePending.FirstOrDefault(p => p.CogiGUID == stkCP.CogiGUID && p.ID == stkCP.ID && p.FactoryCode == CompanyCode);
+                        wmsStkCP.IsDel = true;
+                    }
+                }
+                return db.SaveChanges();
+            }
+        }
+        /// <summary>
+        /// 处理COGI逻辑
+        /// </summary>
+        /// <returns></returns>
+        public int UpdateCOGI(string[] cogiList)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                //标记已删除COGI主记录（WMS_COGI),SAP未决事务记录（SAPTransactionPending),库存待变更记录（StkChangePending）
+                foreach (string cogi in cogiList)
+                {
+                    WMS_COGI wmsCogi = db.WMS_COGI.FirstOrDefault(p => p.CogiGUID == cogi && p.FactoryCode == CompanyCode);
+                    wmsCogi.IsPost = true;
+                    WMS_SAPTransactionPending sapTP = db.WMS_SAPTransactionPending.FirstOrDefault(p => p.CogiGUID == cogi && p.FactoryCode == CompanyCode);
+                    sapTP.IsPost = true;
+                    SYS_SAPTransaction aspT = CreateSAPTranscation(sapTP);
+                    db.SYS_SAPTransaction.Add(aspT);
+
+                    List<WMS_StkChangePending> stkCPList = db.WMS_StkChangePending.Where(p => p.CogiGUID == cogi && p.FactoryCode == CompanyCode).ToList();
+                    foreach (WMS_StkChangePending stkCP in stkCPList)
+                    {
+                        WMS_StkChangePending wmsStkCP = db.WMS_StkChangePending.FirstOrDefault(p => p.CogiGUID == stkCP.CogiGUID && p.ID == stkCP.ID && p.FactoryCode == CompanyCode);
+                        wmsStkCP.IsPosted = true;
+                        //FactoryCode = '' AND StkCode = '' AND PartNo = '' AND PartVersion = ''
+                        WMS_StkDet stkDet = db.WMS_StkDet.FirstOrDefault(p=> p.FactoryCode == stkCP.FactoryCode && p.StkCode == stkCP.StkCode && p.PartNo == stkCP.PartNo && p.FactoryCode == CompanyCode);
+                        switch (stkCP.QualityStatus)
+                        {
+                            case ConstInfo.StkQualityStatus.OK:
+                                {
+                                    switch (stkCP.MngStatus)
+                                    {
+                                        case ConstInfo.StkMngStatusCode.Normal:
+                                            {
+                                                stkDet.NonRtctNormal = stkDet.NonRtctNormal + stkCP.Qty;
+                                                break;
+                                            }
+                                        case ConstInfo.StkMngStatusCode.Consign:
+                                            {
+                                                stkDet.NonRstctConsign = stkDet.NonRstctConsign + stkCP.Qty;
+                                                break;
+                                            }
+                                        case ConstInfo.StkMngStatusCode.Delegation:
+                                            {
+                                                stkDet.NonRstctSubcontract = stkDet.NonRstctSubcontract + stkCP.Qty;
+                                                break;
+                                            }
+                                    }
+                                    break;
+                                }
+                            case ConstInfo.StkQualityStatus.FREEZE:
+                                {
+                                    switch (stkCP.MngStatus)
+                                    {
+                                        case ConstInfo.StkMngStatusCode.Normal:
+                                            {
+                                                stkDet.FrzeNormal = stkDet.FrzeNormal + stkCP.Qty;
+                                                break;
+                                            }
+                                        case ConstInfo.StkMngStatusCode.Consign:
+                                            {
+                                                stkDet.FrzeConsign = stkDet.FrzeConsign + stkCP.Qty;
+                                                break;
+                                            }
+                                        case ConstInfo.StkMngStatusCode.Delegation:
+                                            {
+                                                stkDet.FrzeSubcontract = stkDet.FrzeSubcontract + stkCP.Qty;
+                                                break;
+                                            }
+                                    }
+                                    break;
+                                }
+                            case ConstInfo.StkQualityStatus.QCPEND:
+                                {
+                                    switch (stkCP.MngStatus)
+                                    {
+                                        case ConstInfo.StkMngStatusCode.Normal:
+                                            {
+                                                stkDet.InspNormal = stkDet.InspNormal + stkCP.Qty;
+                                                break;
+                                            }
+                                        case ConstInfo.StkMngStatusCode.Consign:
+                                            {
+                                                stkDet.InspConsign = stkDet.InspConsign + stkCP.Qty;
+                                                break;
+                                            }
+                                        case ConstInfo.StkMngStatusCode.Delegation:
+                                            {
+                                                stkDet.InspSubcontract = stkDet.InspSubcontract + stkCP.Qty;
+                                                break;
+                                            }
+                                    }
+                                    break;
+                                }
+                        }
+                    }
+                }
+                return db.SaveChanges();
+            }
+        }
+        /// <summary>
+        /// 插入数据SYS_SAPTransaction
+        /// </summary>
+        public SYS_SAPTransaction CreateSAPTranscation(WMS_SAPTransactionPending sapTP)
+        {
+            try
+            {
+                SYS_SAPTransaction sapTs = new SYS_SAPTransaction();
+                sapTs.SAPTransCode = sapTP.SAPTransCode;//SAP事务代码
+                sapTs.Module = sapTP.Module;//	模块
+                sapTs.BusinessType = sapTP.BusinessType;//	业务类型
+                sapTs.GUID = sapTP.GUID;//	关联凭证GUID
+                sapTs.FactoryCode = sapTP.FactoryCode;//	工厂代码
+                sapTs.MovementType = sapTP.MovementType;//	移动类型
+                sapTs.PartNo = sapTP.PartNo;//	NULL
+                sapTs.OrderNo = sapTP.OrderNo;//	关联订单
+                sapTs.ItemNumber = sapTP.ItemNumber;//	BOM中子零件的行号
+                sapTs.StockAdress = sapTP.StockAdress;//	SAP库存地点
+                sapTs.StockStatus = sapTP.StockStatus;//	库存状态
+                sapTs.SpecialStock = sapTP.SpecialStock;//	特殊库存
+                sapTs.Qty = sapTP.Qty;//	数量
+                sapTs.Unit = sapTP.Unit;//	单位
+                sapTs.StkQty = sapTP.StkQty;//库存计量数量
+                sapTs.StkUnit = sapTP.StkUnit;//库存计量单位
+                sapTs.AccountingDate = sapTP.AccountingDate;//	记账日期
+                sapTs.VoucherDate = sapTP.VoucherDate;//	凭证日期
+                if (sapTP.PlanDate != DateTime.MinValue)
+                    sapTs.PlanDate = sapTP.PlanDate;//计划日期
+
+                sapTs.RecoilType = sapTP.RecoilType;//	反冲类型
+                sapTs.ProductVersion = sapTP.ProductVersion;//	生产版本
+                sapTs.ParentPart = sapTP.ParentPart;//	父零件
+                sapTs.SupplierCode = sapTP.SupplierCode;//	供应商
+                sapTs.OutSupplierCode = sapTP.OutSupplierCode;//	委外供应商
+                sapTs.CustomerCode = sapTP.CustomerCode;//	客户编码
+                sapTs.ConstCenter = sapTP.ConstCenter;//	成本中心
+                sapTs.Account = sapTP.Account;//	科目编号
+                sapTs.CostProject = sapTP.CostProject;//	项目编号
+                sapTs.LibraryType = sapTP.LibraryType;//	出库类型
+                sapTs.RSFactory = sapTP.RSFactory;//	收发货工厂c
+                sapTs.RSStockAdress = sapTP.RSStockAdress;//	收发库存地点(ReceiveSend)
+                sapTs.RSStockStatus = sapTP.RSStockStatus;//	收发货库存状态(ReceiveSend)
+                sapTs.RSSpecialStock = sapTP.RSSpecialStock;//	收货/发货特殊库存(ReceiveSend)
+                sapTs.ReceivePartNo = sapTP.ReceivePartNo;//	接受物料号
+                sapTs.ReceiveType = sapTP.ReceiveType;//	接收类型
+                sapTs.ItemNo = sapTP.ItemNo;//	行项目号
+                sapTs.SaleOrg = sapTP.SaleOrg;//	销售组织
+                sapTs.DistChannel = sapTP.DistChannel;//	分销渠道
+                sapTs.ProductGroup = sapTP.ProductGroup;//	产品组
+                sapTs.SaleAgrmType = sapTP.SaleAgrmType;//	销售凭证类型
+                sapTs.SalePattern = sapTP.SalePattern;//	销售业务模式
+                sapTs.PlanProtocolNo = sapTP.PlanProtocolNo;//	计划协议号
+                sapTs.CustomerPartNo = sapTP.CustomerPartNo;//	客户零件号
+                sapTs.ShipPlace = sapTP.ShipPlace;//	装运点
+                sapTs.MESOrderNo = sapTP.MESOrderNo;//	MES关联单号
+                sapTs.CustomerOrderNo = sapTP.CustomerOrderNo;//	客户单号
+                sapTs.DeliveryMan = sapTP.DeliveryMan;//	送货人
+                return sapTs;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+}

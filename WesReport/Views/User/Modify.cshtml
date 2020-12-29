@@ -1,0 +1,103 @@
+﻿@{
+    ViewBag.Title = "Modify";
+}
+@using Resources
+<form>
+    <table class="info" style="width:280px">
+        <tr>
+            <td class="label">@Html.Label(Resource.User_account)</td>
+            <td class="field">
+                <input id="modifyForm_UserAccount" name="modifyForm_UserAccount" class="easyui-textbox" data-options="required:true" disabled="disabled" value="@Model.UserAccount" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.User_password)</td>
+            <td class="field">
+                <input id="modifyForm_Password" name="modifyForm_Password" class="easyui-textbox" value="@Model.Password" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.User_name)</td>
+            <td class="field">
+                <input id="modifyForm_UserName" name="modifyForm_UserName" class="easyui-textbox" value="@Model.UserName" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.Job_number)</td>
+            <td class="field">
+                <input id="modifyForm_UserWorkID" name="modifyForm_UserWorkID" class="easyui-textbox" value="@Model.UserWorkID" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.Whether_activation)</td>
+            <td class="field">
+                @Html.Label(Resource.NG)<input type="radio" name="modifyForm_IsActive" value="0" />&nbsp;&nbsp;&nbsp;&nbsp;
+                @Html.Label(Resource.OK)<input type="radio" name="modifyForm_IsActive" value="1" checked="checked" />
+            </td>
+            <td style="display:none"><input id="modifyForm_IsActive" class="easyui-textbox" value="@Model.IsActive.ToString()" /></td>
+        </tr>
+
+        <tr style="display:none"><td><input id="modifyForm_ID" name="modifyForm_ID" class="easyui-textbox" value="@Model.ID" /></td></tr>
+    </table>
+
+    <div style="padding: 5px; text-align: center;">
+        <a href="javascript:void(0)" id="modifyForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Edit)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+    $(function () {
+        SetRadio("modifyForm_IsActive", $("#modifyForm_IsActive").val());
+    });
+    //提交数据
+    $('#modifyForm_Save').click(function () {
+        var ID = $("#modifyForm_ID").val();
+        var UserAccount = $("#modifyForm_UserAccount").val();
+        var UserName = $("#modifyForm_UserName").val();
+        var UserWorkID = $("#modifyForm_UserWorkID").val();
+        var Password = $("#modifyForm_Password").val();
+        var IsActive = $('input[name="modifyForm_IsActive"]:checked').val();
+
+        if (UserAccount == "") {
+            $.messager.alert('@Html.Label(Resource.Modification_failed)','@Html.Label(Resource.User_account_cannot_be_empty)');
+            return;
+        }
+
+        $.messager.confirm('@Html.Label(Resource.Tips)', '@Html.Label(Resource.Confirm_submission)', function (r) {
+            if (r) {
+                var data =
+                    {
+                        ID: ID,
+                        UserAccount: UserAccount,
+                        UserName: UserName,
+                        UserWorkID: UserWorkID,
+                        Password: Password,
+                        IsActive: IsActive
+                    };
+                $.post("@Url.Action("ModifyCfg")", data, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.Modification_succeeded)' );
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message, '@Html.Label(Resource.Error)');
+                    }
+                });
+            };
+        });
+    });
+
+    function SetRadio(ParamName, ParamValue) {
+        if (ParamValue == "False") {
+            $("input:radio[name='" + ParamName + "'][value='0']").attr('checked', 'true');
+        }
+        else {
+            $("input:radio[name='" + ParamName + "'][value='1']").attr('checked', 'true');
+        }
+    }
+</script>

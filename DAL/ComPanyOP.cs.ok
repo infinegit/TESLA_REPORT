@@ -1,0 +1,61 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DAL
+{
+   public class ComPanyOP:BaseOP
+    {
+        public ComPanyOP(string factID)
+        {
+            CompanyCode = factID;
+        }
+
+        public IEnumerable<SYS_Company> GetList(string txtSearch = "")
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                //var item = db.RPT_User.Where(p => txtSearch == "" || p.UserAccount.Contains(txtSearch) || p.UserName.Contains(txtSearch)).ToList();
+                var item = db.SYS_Company.ToList();
+                return item;
+            }
+        }
+
+        public IEnumerable<SYS_Company> GetList(string txtSearch, int PageNumber, int PageSize, out int total)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.SYS_Company;
+                total = item.Count();
+                var data = item.OrderBy(p => p.ID).Skip((PageNumber - 1) * PageSize).Take(PageSize);
+                return data.ToList();
+            }
+        }
+
+        public int Update(int id, string CompanyName, string CompanyFullName)
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.SYS_Company.FirstOrDefault(p => p.ID == id);
+
+                item.CompanyName = CompanyName;
+                item.CompanyFullName = CompanyFullName;
+       
+               return  db.SaveChanges();            
+            }
+        }
+
+        public List<SYS_Company> GetCompanyList()
+        {
+            using (IMES3Entities db = new IMES3Entities())
+            {
+                var item = db.SYS_Company.ToList();
+
+                return item;
+            }
+        }
+
+    }
+}

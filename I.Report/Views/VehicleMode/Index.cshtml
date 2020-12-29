@@ -1,0 +1,133 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+@using Resources
+
+<script type="text/javascript">
+        $(function () {
+            $("#add").click(function(){
+                openDlg({
+                    url:"@Url.Action("Create")",
+                    title:'@Html.Label(Resource.newly_build)'
+                });
+            });
+
+            $("#modify").click(function(){
+
+                var row= $("#datagrid").datagrid('getSelected');
+                if(row==null||row==undefined)
+                {
+                    $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.No_rows_are_selected)');
+                    return;
+                }
+                openDlg({
+                    url:"@Url.Action("Edit")?id="+row.ID,
+                    title:'@Html.Label(Resource.Edit)'
+                });
+            });
+
+            $("#delete").click(function(){
+
+                var row= $("#datagrid").datagrid('getSelected');
+                if(row==null||row==undefined)
+                {
+                    $.messager.alert('@Html.Label(Resource.Tips)','@Html.Label(Resource.No_rows_are_selected)');
+                    return;
+                }
+
+                $.messager.confirm('@Html.Label(Resource.Tips)','@Html.Label(Resource.Are_you_sure_you_want_to_delete_this_data)',function(r){
+                    if(r){
+                        $.post("@Url.Action("Delete")",{id:row.ID},function(result){
+                            if(result.state=="success"){
+                                refresh();
+                            }
+                            else{
+                                $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Deletion_failed)');
+                            }
+                        });
+                    }
+                });
+
+            });
+
+        });
+
+        function refresh()
+        {
+            $('#datagrid').datagrid();
+
+        }
+</script>
+<div id="toolbar" style="width: 100%;">
+
+
+    <a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">@Html.Label(Resource.Add)</a>
+    <a id="modify" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">@Html.Label(Resource.Error)</a>
+    <a id="delete" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">@Html.Label(Resource.Delete)</a>
+
+</div>
+<div>
+    <table id="divSearch">
+        <tr>
+            <td>
+              @Html.Label(Resource.Model_code) :
+            </td>
+            <td>
+                <input class="easyui-textbox" id="SearchVehicleMode" />
+            </td>
+            <td> @Html.Label(Resource.Model_name) :</td>
+            <td>
+                <input class="easyui-textbox" id="SearchVehicleName" />
+            </td>
+            <td>
+                <a id="btnSearch" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'" onclick=""> @Html.Label(Resource.Select)</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </td>
+        </tr>
+
+    </table>
+</div>
+
+
+<div>
+    <table id="datagrid" title='@Html.Label(Resource.Information_list)' style="width: 100%; height: auto; border: 1px solid #ccc;"></table>
+</div>
+<script type="text/javascript">
+
+        $(document).ready(function () {
+
+
+            $("#btnSearch").click(function () {
+                $('#datagrid').datagrid({
+                    //height: 340,
+                    url: '@Url.Action("GetVehicleModeList")',
+                    method: 'POST',
+                    striped: true,
+                    fitColumns: true,
+                    singleSelect: true,
+                    rownumbers: true,
+                    pagination: true,
+                    nowrap: false,
+                    toolbar: "toolbar",
+                    showFooter: true,
+                    queryParams: { vehicleMode: $("#SearchVehicleMode").val(), vehicleName: $("#SearchVehicleName").val() },
+                    toolbar: "toolbar",
+                    columns: [[
+                        { field: 'ID', checkbox: true },
+                        { field: 'VehicleMode', title: '@Html.Label(Resource.Model_code)', width: 100, align: 'left' },
+                        { field: 'VehicleName', title: '@Html.Label(Resource.Model_name)', width: 100, align: 'left' },
+
+                    ]]
+                });
+
+                var p = $('#datagrid').datagrid('getPager');
+                $(p).pagination({
+                    pageNumber: 1, //默认显示第几页
+                    pageSize:@ConstInfo.PAGE_SIZE,
+                    beforePageText: '@Html.Label(Resource.page)',
+                    afterPageText: '@Html.Label(Resource.The_first)'  '@Html.Label(Resource.in_total)'{pages} '@Html.Label(Resource.page)',
+                    displayMsg: '@Html.Label(Resource.Displaying)' '{from}' '@Html.Label(Resource.To)' '{to}' '@Html.Label(Resource.Of)' '{total}' '@Html.Label(Resource.Items)';
+                })
+            });
+        });
+</script>

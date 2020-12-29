@@ -1,0 +1,851 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using DAL.Models;
+
+namespace DAL
+{
+    /// <summary>
+    /// PD工单操作
+    /// </summary>
+    public class PDOrderOP : BaseOP
+    {
+        public PDOrderOP(string CompanyCode)
+        {
+            CompanyCode = CompanyCode;
+        }
+
+        #region 查询数据
+        /// <summary>
+        /// 根据工单号查找
+        /// </summary>
+        /// <param name="orderCode"></param>
+        /// <returns></returns>
+        public PDOrderModel GetPDOrderByCode(string orderCode)
+        {
+            var data = DB.EMS_PDMWorkOrder.FirstOrDefault(p => p.OrderCode == orderCode);
+            PDOrderModel rtn = new PDOrderModel();
+            rtn.CopyFrom(data);
+            return rtn;
+        }
+        /// <summary>
+        /// 获得所有的显示控件
+        /// </summary>
+        /// <param name="pageName">页面</param>
+        /// <param name="role">角色</param>
+        /// <param name="status">工单状态</param>
+        /// <returns></returns>
+        public List<EMS_ControlTabs> GetControlTabs(string pageName, string role, int status)
+        {
+            return DB.EMS_ControlTabs.Where(p => p.PageName == pageName && p.Role == role && p.Status == status).ToList();
+        }
+        /// <summary>
+        /// PD工单状态
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public string GetPDOrderStatus(int status)
+        {
+            string rtn = "";
+            switch (status)
+            {
+                case (int)ConstInfo.EMSPDOrderStatus.Create:
+                    rtn = "创建";
+                    break;
+                case (int)ConstInfo.EMSPDOrderStatus.Prepare:
+                    rtn = "预执行";
+                    break;
+                case (int)ConstInfo.EMSPDOrderStatus.Allocation:
+                    rtn = "维修工维修";
+                    break;
+                case (int)ConstInfo.EMSPDOrderStatus.MaintainCompleteSubmit:
+                    rtn = "工程师审核";
+                    break;
+                case (int)ConstInfo.EMSPDOrderStatus.GoBack:
+                    rtn = "重入工单池";
+                    break;
+                case (int)ConstInfo.EMSPDOrderStatus.EngineerLeadAudit:
+                    rtn = "主管工程师审核";
+                    break;
+                case (int)ConstInfo.EMSPDOrderStatus.Close:
+                case (int)ConstInfo.EMSPDOrderStatus.ForceClose:
+                    rtn = "关闭";
+                    break;
+                default:
+                    rtn = status.ToString();
+                    break;
+            }
+            return rtn;
+        }
+        /// <summary>
+        /// 根据设备获得工程师
+        /// </summary>
+        /// <param name="superiorEauip"></param>
+        /// <param name="equip"></param>
+        /// <returns></returns>
+        private string GetEngineerByEquip(string superiorEauip, string equip)
+        {
+            try
+            {
+                return string.IsNullOrEmpty(equip) ? GetData<EMS_Equipment>(p => p.EquipCode == superiorEauip).Engineer : GetData<EMS_Equipment>(p => p.EquipCode == equip).Engineer;
+            }
+            catch (Exception ex)
+            {
+                return "";
+            }
+        }
+        /// <summary>
+        /// 获得维修班组长
+        /// </summary>
+        /// <param name="userAccount">维修工工号</param>
+        /// <returns></returns>
+        public string GetMaintainLead(string userAccount)
+        {
+            try
+            {
+                var data = (from a in DB.EMS_MaintainGroup
+                            join b in DB.EMS_MaintainShift on a.ShiftID equals b.ShiftID
+                            where a.UserAccount == userAccount
+                            select b).FirstOrDefault();
+                return data == null ? "" : data.TeamLead;
+            }
+            catch
+            {
+                return "";
+            }
+        }
+        /// <summary>
+        /// 工单审核获取下一状态
+        /// </summary>
+        /// <param name="orderType">工单类型</param>
+        /// <param name="action">动作</param>
+        /// <param name="status">当前状态</param>
+        /// <returns></returns>
+        public EMS_WorkFlow GetNextStatus(string orderType, string action, int status)
+        {
+            return DB.EMS_WorkFlow.FirstOrDefault(p => p.OrderType == orderType && p.Action == action && p.Status == status);
+        }
+        /// <summary>
+        /// 获得设备信息      
+        /// </summary>
+        /// <param name="superiorEquip">设备</param>
+        /// <param name="equipCode">子设备</param>
+        /// <returns></returns>        
+        public EMS_Equipment GetEquipByEquipCode(string superiorEquip, string equipCode)
+        {
+            return string.IsNullOrEmpty(equipCode) ? GetData<EMS_Equipment>(p => p.EquipCode == superiorEquip) : GetData<EMS_Equipment>(p => p.EquipCode == equipCode);
+        }
+
+        #region 前台显示刷新
+        /// <summary>
+        /// 获取工程师PD工单
+        /// </summary>
+        /// <param name="engineerAccount">工程师工号</param>
+        /// <param name="txtSearch">搜索</param>
+        /// <param name="pageNumber">页号</param>
+        /// <param name="pageSize">每页行数</param>
+        /// <param name="total">总数</param>
+        /// <returns></returns>
+        public List<PDOrderModel> GetPDOrderForEngineer(string engineerAccount, string txtSearch, int pageNumber, int pageSize, out int total)
+        {
+            var temp = (from a in DB.EMS_PDMWorkOrder
+                        join b1 in DB.EMS_FunctionLocation on a.SuperiorFunLocCode equals b1.FunctionLocationCode into b2
+                        join c1 in DB.EMS_FunctionLocation on a.FunctionLocationCode equals c1.FunctionLocationCode into c2
+                        join d1 in DB.EMS_Equipment on a.SuperiorEquipCode equals d1.EquipCode into d2
+                        join e1 in DB.EMS_Equipment on a.EquipCode equals e1.EquipCode into e2
+                        join f1 in DB.SYS_User on a.CreateUserAccount equals f1.UserAccount into f2
+                        from b3 in b2.DefaultIfEmpty()
+                        from c3 in b2.DefaultIfEmpty()
+                        from d3 in d2.DefaultIfEmpty()
+                        from e3 in e2.DefaultIfEmpty()
+                        from f3 in f2.DefaultIfEmpty()
+                        where a.IsClosed == false
+                        && (d3.Engineer == engineerAccount || e3.Engineer == engineerAccount || a.CreateUserAccount == engineerAccount)
+                        && (string.IsNullOrEmpty(txtSearch) || a.OrderCode.Contains(txtSearch) || a.SuperiorEquipCode.Contains(txtSearch))
+                        select new PDOrderModel()
+                        {
+                            ID = a.ID,
+                            SuperiorFunLocCodeName = b3.FunctionLocationName ?? "",
+                            FunctionLocationCodeName = c3.FunctionLocationName ?? "",
+                            SuperiorEquipCodeName = d3.EquipName ?? "",
+                            EquipCodeName = e3.EquipName ?? "",
+                            CreateUserName = f3.UserName ?? "",
+                            PDMWorkOrder = a
+                        }).OrderByDescending(p => p.ID);
+            total = temp.Count();
+            var data = temp.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            return data.ToList();
+        }
+        /// <summary>
+        /// 获取大班组长PD工单
+        /// </summary>
+        /// <param name="bzzAccount">工程师工号</param>
+        /// <param name="txtSearch">搜索</param>
+        /// <param name="pageNumber">页号</param>
+        /// <param name="pageSize">每页行数</param>
+        /// <param name="total">总数</param>
+        /// <returns></returns>
+        public List<PDOrderModel> GetPDOrderForEMSDBZZ(string bzzAccount, string txtSearch, int pageNumber, int pageSize, out int total)
+        {
+            var temp = (from a in DB.EMS_PDMWorkOrder
+                        join b1 in DB.EMS_FunctionLocation on a.SuperiorFunLocCode equals b1.FunctionLocationCode into b2
+                        join c1 in DB.EMS_FunctionLocation on a.FunctionLocationCode equals c1.FunctionLocationCode into c2
+                        join d1 in DB.EMS_Equipment on a.SuperiorEquipCode equals d1.EquipCode into d2
+                        join e1 in DB.EMS_Equipment on a.EquipCode equals e1.EquipCode into e2
+                        join f1 in DB.SYS_User on a.CreateUserAccount equals f1.UserAccount into f2
+                        join g1 in DB.EMS_LagreGroup on a.LargeGroup equals g1.ShiftID into g2
+                        from b3 in b2.DefaultIfEmpty()
+                        from c3 in b2.DefaultIfEmpty()
+                        from d3 in d2.DefaultIfEmpty()
+                        from e3 in e2.DefaultIfEmpty()
+                        from f3 in f2.DefaultIfEmpty()
+                        from g3 in g2.DefaultIfEmpty()
+                        where a.IsClosed == false
+                        && g3.TeamLead == bzzAccount
+                        && (string.IsNullOrEmpty(txtSearch) || a.OrderCode.Contains(txtSearch) || a.SuperiorEquipCode.Contains(txtSearch))
+                        select new PDOrderModel()
+                        {
+                            ID = a.ID,
+                            SuperiorFunLocCodeName = b3.FunctionLocationName ?? "",
+                            FunctionLocationCodeName = c3.FunctionLocationName ?? "",
+                            SuperiorEquipCodeName = d3.EquipName ?? "",
+                            EquipCodeName = e3.EquipName ?? "",
+                            CreateUserName = f3.UserName ?? "",
+                            PDMWorkOrder = a
+                        }).OrderByDescending(p => p.ID);
+            total = temp.Count();
+            var data = temp.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            return data.ToList();
+        }
+        /// <summary>
+        /// 维修工PD工单显示
+        /// </summary>
+        /// <param name="mtAccount">维修工工号</param>
+        /// <param name="txtSearch"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="total"></param>
+        /// <returns></returns>
+        public List<PDOrderModel> GetPDOrderForMaintainer(string mtAccount, string txtSearch, int pageNumber, int pageSize, out int total)
+        {
+            var temp = (from a in DB.EMS_PDMWorkOrder
+                        join g1 in DB.EMS_WorkOrderMaintain on a.OrderCode equals g1.OrderCode into g2
+                        join b1 in DB.EMS_FunctionLocation on a.SuperiorFunLocCode equals b1.FunctionLocationCode into b2
+                        join c1 in DB.EMS_FunctionLocation on a.FunctionLocationCode equals c1.FunctionLocationCode into c2
+                        join d1 in DB.EMS_Equipment on a.SuperiorEquipCode equals d1.EquipCode into d2
+                        join e1 in DB.EMS_Equipment on a.EquipCode equals e1.EquipCode into e2
+                        join f1 in DB.SYS_User on a.CreateUserAccount equals f1.UserAccount into f2
+                        from b3 in b2.DefaultIfEmpty()
+                        from c3 in b2.DefaultIfEmpty()
+                        from d3 in d2.DefaultIfEmpty()
+                        from e3 in e2.DefaultIfEmpty()
+                        from f3 in f2.DefaultIfEmpty()
+                        from g3 in g2.DefaultIfEmpty()
+                        where a.IsClosed == false
+                        && (g3.MaintainUser == mtAccount)
+                        && (string.IsNullOrEmpty(txtSearch) || a.OrderCode.Contains(txtSearch) || a.SuperiorEquipCode.Contains(txtSearch))
+                        select new PDOrderModel()
+                        {
+                            ID = a.ID,
+                            SuperiorFunLocCodeName = b3.FunctionLocationName ?? "",
+                            FunctionLocationCodeName = c3.FunctionLocationName ?? "",
+                            SuperiorEquipCodeName = d3.EquipName ?? "",
+                            EquipCodeName = e3.EquipName ?? "",
+                            CreateUserName = f3.UserName ?? "",
+                            PDMWorkOrder = a
+                        }).Distinct().OrderByDescending(p => p.ID);
+            total = temp.Count();
+            var data = temp.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            return data.ToList();
+        }
+        /// <summary>
+        /// 维修班组长PD工单显示
+        /// </summary>
+        /// <param name="mtlAccount">维修班组长工号</param>
+        /// <param name="txtSearch"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="total"></param>
+        /// <returns></returns>
+        public List<PDOrderModel> GetPDOrderForMaintainLead(string mtlAccount, string txtSearch, int pageNumber, int pageSize, out int total)
+        {
+            var temp = (from a in DB.EMS_PDMWorkOrder
+                        join b1 in DB.EMS_FunctionLocation on a.SuperiorFunLocCode equals b1.FunctionLocationCode into b2
+                        join c1 in DB.EMS_FunctionLocation on a.FunctionLocationCode equals c1.FunctionLocationCode into c2
+                        join d1 in DB.EMS_Equipment on a.SuperiorEquipCode equals d1.EquipCode into d2
+                        join e1 in DB.EMS_Equipment on a.EquipCode equals e1.EquipCode into e2
+                        join f1 in DB.SYS_User on a.CreateUserAccount equals f1.UserAccount into f2
+                        from b3 in b2.DefaultIfEmpty()
+                        from c3 in b2.DefaultIfEmpty()
+                        from d3 in d2.DefaultIfEmpty()
+                        from e3 in e2.DefaultIfEmpty()
+                        from f3 in f2.DefaultIfEmpty()
+                        where a.IsClosed == false
+                        && a.MaintainTeamLead == mtlAccount
+                        && (string.IsNullOrEmpty(txtSearch) || a.OrderCode.Contains(txtSearch) || a.SuperiorEquipCode.Contains(txtSearch))
+                        select new PDOrderModel()
+                        {
+                            ID = a.ID,
+                            SuperiorFunLocCodeName = b3.FunctionLocationName ?? "",
+                            FunctionLocationCodeName = c3.FunctionLocationName ?? "",
+                            SuperiorEquipCodeName = d3.EquipName ?? "",
+                            EquipCodeName = e3.EquipName ?? "",
+                            CreateUserName = f3.UserName ?? "",
+                            PDMWorkOrder = a
+                        }).Distinct().OrderByDescending(p => p.ID);
+            total = temp.Count();
+            var data = temp.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            return data.ToList();
+        }
+        /// <summary>
+        /// 获取主管工程师PD工单
+        /// </summary>
+        /// <param name="engineerAccount">工程师工号</param>
+        /// <param name="txtSearch">搜索</param>
+        /// <param name="pageNumber">页号</param>
+        /// <param name="pageSize">每页行数</param>
+        /// <param name="total">总数</param>
+        /// <returns></returns>
+        public List<PDOrderModel> GetPDOrderForEngineerLead(string engineerAccount, string txtSearch, int pageNumber, int pageSize, out int total)
+        {
+            var temp = (from a in DB.EMS_PDMWorkOrder
+                        join b1 in DB.EMS_FunctionLocation on a.SuperiorFunLocCode equals b1.FunctionLocationCode into b2
+                        join c1 in DB.EMS_FunctionLocation on a.FunctionLocationCode equals c1.FunctionLocationCode into c2
+                        join d1 in DB.EMS_Equipment on a.SuperiorEquipCode equals d1.EquipCode into d2
+                        join e1 in DB.EMS_Equipment on a.EquipCode equals e1.EquipCode into e2
+                        join f1 in DB.SYS_User on a.CreateUserAccount equals f1.UserAccount into f2
+                        from b3 in b2.DefaultIfEmpty()
+                        from c3 in b2.DefaultIfEmpty()
+                        from d3 in d2.DefaultIfEmpty()
+                        join g3 in DB.EMS_EngineerGroup on d3.Engineer equals g3.UserAccount into g4
+                        from g5 in g4.DefaultIfEmpty()
+                        join g6 in DB.EMS_EngineerShift on g5.ShiftID equals g6.ShiftID into g7
+                        from g8 in g7.DefaultIfEmpty()
+                        from e3 in e2.DefaultIfEmpty()
+                        join h3 in DB.EMS_EngineerGroup on d3.Engineer equals h3.UserAccount into h4
+                        from h5 in g4.DefaultIfEmpty()
+                        join h6 in DB.EMS_EngineerShift on g5.ShiftID equals h6.ShiftID into h7
+                        from h8 in h7.DefaultIfEmpty()
+                        from f3 in f2.DefaultIfEmpty()
+                        where a.IsClosed == false
+                        && (g8.TeamLead == engineerAccount || h8.TeamLead == engineerAccount)
+                        && (string.IsNullOrEmpty(txtSearch) || a.OrderCode.Contains(txtSearch) || a.SuperiorEquipCode.Contains(txtSearch))
+                        select new PDOrderModel()
+                        {
+                            ID = a.ID,
+                            SuperiorFunLocCodeName = b3.FunctionLocationName ?? "",
+                            FunctionLocationCodeName = c3.FunctionLocationName ?? "",
+                            SuperiorEquipCodeName = d3.EquipName ?? "",
+                            EquipCodeName = e3.EquipName ?? "",
+                            CreateUserName = f3.UserName ?? "",
+                            PDMWorkOrder = a
+                        }).OrderByDescending(p => p.ID);
+            total = temp.Count();
+            var data = temp.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            return data.ToList();
+        }
+        #endregion
+        #endregion
+
+        #region 添加数据
+        /// <summary>
+        /// 维修工创建EM工单
+        /// </summary>        
+        /// <param name="pdEntity">PD实体</param>
+        /// <param name="companyCode">工厂编号</param>
+        /// <returns></returns>
+        public string CreateEMS_PDWorkOrder(EMS_PDMWorkOrder pdEntity, string companyCode)
+        {
+            try
+            {
+                Insert(pdEntity);
+                //记录PD工单Log
+                CreateEMS_PDWorkOrderLog(pdEntity);
+                //创建通知单
+                AddOrUpdateNoticeOderByPD(pdEntity, companyCode, (int)ConstInfo.EMSNoticeOrderStatus.Create, (int)ConstInfo.EMSNoticeOperateType.Create);
+                //创建同步工单信息
+                AddOrUpdateSynWorkOrderByPD(pdEntity, (int)ConstInfo.EMSNoticeOrderStatus.Create, (int)ConstInfo.EMSNoticeOperateType.Create);
+                DB.SaveChanges();
+                return pdEntity.OrderCode;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// 记录PD工单Log
+        /// </summary>
+        /// <param name="pdEntity">EM实体</param>
+        private void CreateEMS_PDWorkOrderLog(EMS_PDMWorkOrder pdEntity)
+        {
+            try
+            {
+                EMS_PDMWorkOrderLog pdLog = new EMS_PDMWorkOrderLog();
+                pdLog.CopyFrom(pdEntity);
+                Insert(pdLog);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        /// <summary>
+        /// 根据PD工单添加或更改通知单
+        /// </summary>
+        /// <param name="pdEntity">EM实体</param>
+        /// <param name="companyCode">工厂编码</param>
+        /// <param name="status">通知单状态</param>
+        /// <param name="operateType">通知单处理标识</param>
+        private void AddOrUpdateNoticeOderByPD(EMS_PDMWorkOrder pdEntity, string companyCode, int status, int operateType)
+        {
+            try
+            {
+                bool isExist = true;//是否已存在该工单的通知单
+                var noticeOrder = GetData<EMS_NoticeOrder>(p => p.OriginOrderCode == pdEntity.OrderCode);
+                if (noticeOrder == null)
+                {
+                    isExist = false;
+                    noticeOrder = _CreateNoticeOrder();
+                    noticeOrder.OrderCode = new BarcodeOP(CompanyCode).GenerateNoticeOrderNo(companyCode, pdEntity.CreateUserAccount, pdEntity.CreateMachine);
+                    noticeOrder.OrderType = ConstInfo.EMSNoticeOrderType.PD;
+                    noticeOrder.CreateUserAccount = pdEntity.CreateUserAccount;
+                    noticeOrder.CreateTime = pdEntity.CreateTime;
+                    noticeOrder.CreateMachine = pdEntity.CreateMachine;
+                    noticeOrder.TaskId = "";
+                }
+                //给通知单实体属性赋值
+                noticeOrder.OrderTitle = pdEntity.OrderTitle;
+                noticeOrder.SuperiorFunLocCode = "";
+                noticeOrder.FunctionLocationCode = string.IsNullOrEmpty(pdEntity.FunctionLocationCode) ? pdEntity.SuperiorFunLocCode : pdEntity.FunctionLocationCode;
+                noticeOrder.SuperiorEquipCode = "";
+                noticeOrder.EquipCode = string.IsNullOrEmpty(pdEntity.EquipCode) ? pdEntity.SuperiorEquipCode : pdEntity.EquipCode;
+                noticeOrder.Engineer = GetEngineerByEquip(pdEntity.SuperiorEquipCode, pdEntity.EquipCode);
+                noticeOrder.PlanFactory = pdEntity.PlanFactory;
+                noticeOrder.WorkCenter = pdEntity.WorkCenter;
+                noticeOrder.WCFactory = pdEntity.WCFactory;
+                noticeOrder.IsShutDown = false;
+                noticeOrder.ShutDownStartDate = "";
+                noticeOrder.ShutDownStartTime = "";
+                noticeOrder.ShutDownEndDate = "";
+                noticeOrder.ShutDownEndTime = "";
+                noticeOrder.ShutDownTime = 0;
+                noticeOrder.OriginOrderCode = pdEntity.OrderCode;
+                noticeOrder.HitchDescDetail = pdEntity.HitchDescDetail;
+                noticeOrder.HitchReason = "";
+                noticeOrder.MaintainStep = pdEntity.Solution;
+                noticeOrder.Advice = "";
+                noticeOrder.Suggestion = pdEntity.Suggestion;
+                noticeOrder.Status = status;
+                noticeOrder.OperateType = operateType;
+                noticeOrder.IsSyncSAP = false;
+                noticeOrder.LatestModifyUserAccount = pdEntity.LatestModifyUserAccount;
+                noticeOrder.LatestModifyTime = pdEntity.LatestModifyTime;
+                noticeOrder.LatestModifyMachine = pdEntity.LatestModifyMachine;
+                //通知单明细表
+                var noticOrderDet = GetData<EMS_NoticeOrderDet>(p => p.OrderCode == noticeOrder.OrderCode) ?? new EMS_NoticeOrderDet()
+                {
+                    OrderCode = noticeOrder.OrderCode,
+                    OrderType = noticeOrder.OrderType,
+                    ProjectNo = "1",
+                    CreateUserAccount = noticeOrder.CreateUserAccount,
+                    CreateTime = noticeOrder.CreateTime,
+                    CreateMachine = noticeOrder.CreateMachine
+                };
+                noticOrderDet.HitchPartGrpCode = "";
+                noticOrderDet.HitchPartCode = "";
+                noticOrderDet.HitchDescGrpCode = "";
+                noticOrderDet.HitchDescCode = "";
+                noticOrderDet.HitchDesc = "";
+                noticOrderDet.HitchReasionGrpCode = "";
+                noticOrderDet.HitchReasionCode = "";
+                noticOrderDet.HitchReasion = "";
+                noticOrderDet.LatestModifyUserAccount = noticeOrder.LatestModifyUserAccount;
+                noticOrderDet.LatestModifyTime = noticeOrder.LatestModifyTime;
+                noticOrderDet.LatestModifyMachine = noticeOrder.LatestModifyMachine;
+                if (isExist)
+                {
+                    Update(noticeOrder);
+                    Update(noticOrderDet);
+                }
+                else
+                {
+                    Insert(noticeOrder);
+                    Insert(noticOrderDet);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        /// <summary>
+        /// 根据PD工单同步工单表
+        /// </summary>
+        /// <param name="pdEntity">EM工单</param>
+        /// <param name="status">工单状态</param>
+        /// <param name="operateType">处理标识</param>
+        private void AddOrUpdateSynWorkOrderByPD(EMS_PDMWorkOrder pdEntity, int status, int operateType)
+        {
+            try
+            {
+                bool isExist = true;//是否已存在EM工单同步信息
+                var synWorkOrder = GetData<EMS_SynWorkOrder>(p => p.OrderCode == pdEntity.OrderCode);
+                if (synWorkOrder == null)
+                {
+                    isExist = false;
+                    synWorkOrder = _CreateSynWorkOrder();
+                    synWorkOrder.OrderCode = pdEntity.OrderCode;
+                    synWorkOrder.OrderType = ConstInfo.EMSSynOrderType.PD;
+                    synWorkOrder.CreateUserAccount = pdEntity.CreateUserAccount;
+                    synWorkOrder.CreateTime = pdEntity.CreateTime;
+                    synWorkOrder.CreateMachine = pdEntity.CreateMachine;
+                    synWorkOrder.TaskId = "";
+                }
+                synWorkOrder.OrderTitle = pdEntity.OrderTitle;
+                synWorkOrder.SuperiorFunLocCode = "";
+                synWorkOrder.FunctionLocationCode = string.IsNullOrEmpty(pdEntity.FunctionLocationCode) ? pdEntity.SuperiorFunLocCode : pdEntity.FunctionLocationCode;
+                synWorkOrder.SuperiorEquipCode = "";
+                synWorkOrder.EquipCode = string.IsNullOrEmpty(pdEntity.EquipCode) ? pdEntity.SuperiorEquipCode : pdEntity.EquipCode;
+                synWorkOrder.Engineer = GetEngineerByEquip(pdEntity.SuperiorEquipCode, pdEntity.EquipCode);
+                synWorkOrder.StartDate = pdEntity.CreateTime;
+                synWorkOrder.EndDate = pdEntity.MaintainEndTime;
+                synWorkOrder.PlanFactory = pdEntity.PlanFactory;
+                synWorkOrder.WorkCenter = pdEntity.WorkCenter;
+                synWorkOrder.WCFactory = pdEntity.WCFactory;
+                synWorkOrder.OrderStatus = status;
+                synWorkOrder.SAPCreateDate = pdEntity.CreateTime.ToString("yyyyMMdd");
+                synWorkOrder.SAPCreateTime = pdEntity.CreateTime.ToString("HHmmss");
+                synWorkOrder.Process = "0010";
+                synWorkOrder.WorkTime = 0;
+                synWorkOrder.Unit = "H";
+                synWorkOrder.OperateType = operateType;
+                synWorkOrder.IsSyncSAP = false;
+                synWorkOrder.LatestModifyUserAccount = pdEntity.LatestModifyUserAccount;
+                synWorkOrder.LatestModifyTime = pdEntity.LatestModifyTime;
+                synWorkOrder.LatestModifyMachine = pdEntity.LatestModifyMachine;
+                if (isExist)
+                {
+                    Update(synWorkOrder);
+                }
+                else
+                {
+                    Insert(synWorkOrder);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        #endregion
+
+        #region 更新数据
+        /// <summary>
+        /// 更新EM工单数据
+        /// </summary>
+        /// <param name="pdEntity">EM工单</param>
+        /// <param name="isChangeStatus">是否改变状态（只是保存信息）</param>
+        /// <returns></returns>        
+        public bool UpdateEMS_PDWorkOrder(EMS_PDMWorkOrder pdEntity, bool isChangeStatus = false)
+        {
+            try
+            {
+                pdEntity.LatestModifyTime = DateTime.Now;
+                //更改前，不同的状态有不同的额外操作
+                if (isChangeStatus)
+                {
+                    PDActionBeforeUpdate(pdEntity);
+                }
+                Update(pdEntity);
+                CreateEMS_PDWorkOrderLog(pdEntity);
+                DB.SaveChanges();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        /// <summary>
+        /// PD更改前操作
+        /// </summary>
+        /// <param name="pdEntity"></param>
+        private void PDActionBeforeUpdate(EMS_PDMWorkOrder pdEntity)
+        {
+            try
+            {
+                switch (pdEntity.Status)
+                {
+                    case (int)ConstInfo.EMSPDOrderStatus.Create:
+                        {
+                            pdEntity.MaintainStartTime = DateTime.Now;
+                            break;
+                        }
+                    case (int)ConstInfo.EMSPDOrderStatus.GoBack:
+                        {
+                            break;
+                        }
+                    case (int)ConstInfo.EMSPDOrderStatus.Prepare:
+                        {
+                            break;
+                        }
+                    case (int)ConstInfo.EMSPDOrderStatus.Allocation:
+                        {
+                            break;
+                        }
+                    case (int)ConstInfo.EMSPDOrderStatus.MaintainCompleteSubmit:
+                        {
+                            break;
+                        }
+                    case (int)ConstInfo.EMSPDOrderStatus.EngineerLeadAudit:
+                        {
+                            //报工
+                            ReportWorkTime(pdEntity.OrderCode);
+                            break;
+                        }
+                    case (int)ConstInfo.EMSPDOrderStatus.Close:
+                        {
+                            //关闭时报工
+                            ReportWorkTime(pdEntity.OrderCode);
+                            AddOrUpdateNoticeOderByPD(pdEntity, CompanyCode, (int)ConstInfo.EMSNoticeOrderStatus.Complete, (int)ConstInfo.EMSNoticeOperateType.Update);
+                            AddOrUpdateSynWorkOrderByPD(pdEntity, (int)ConstInfo.EMSNoticeOrderStatus.Complete, (int)ConstInfo.EMSNoticeOperateType.Update);
+                            //如果来源是巡检通知单，关闭巡检通知单
+                            if (pdEntity.OriginType == ConstInfo.EMSOrderType.IPQC)
+                            {
+                                var ipqcEntity = GetData<EMS_IPQCOrder>(p => p.OrderCode == pdEntity.OriginCode);
+                                ipqcEntity.Status = (int) ConstInfo.EMSIPQCOrderStatus.Close;
+                                ipqcEntity.IsClosed = true;
+                                ipqcEntity.CloseUserAccount = pdEntity.CloseUserAccount;
+                                ipqcEntity.CloseTime = pdEntity.CloseTime;
+                                ipqcEntity.CloseMachine = pdEntity.CloseMachine;
+                                IPQCOrderOP ipqcOP = new IPQCOrderOP(DB);
+                                ipqcOP.UpdateEMS_IPQCOrder(ipqcEntity, true);
+                            }
+                            break;
+                        }
+                    case (int)ConstInfo.EMSPDOrderStatus.ForceClose:
+                        {
+                            break;
+                        }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        /// <summary>
+        /// PD工单报工
+        /// </summary>
+        /// <param name="pdOrderCode"></param>
+        private void ReportWorkTime(string pdOrderCode)
+        {
+            var workMaintain = GetList<EMS_WorkOrderMaintain>(p => p.OrderCode == pdOrderCode);
+            foreach (var item in workMaintain)
+            {
+                item.IsSyncSAP = false;
+                Update(item);
+            }
+        }
+        /// <summary>
+        /// 关联同步表与通知单
+        /// </summary>
+        /// <param name="orderCode">EM工单号</param>
+        /// <returns></returns>        
+        public bool LinkSynOrderNoticeOrder(string orderCode)
+        {
+            try
+            {
+                var noticeOrder = GetData<EMS_NoticeOrder>(p => p.OriginOrderCode == orderCode);
+                if (noticeOrder == null)
+                {
+                    throw new Exception("未找到工单" + orderCode + "关联通知单");
+                }
+                var synOrder = GetData<EMS_SynWorkOrder>(p => p.OrderCode == orderCode);
+                if (synOrder == null)
+                {
+                    throw new Exception("未找到工单" + orderCode + "关联同步表");
+                }
+                synOrder.NoticeOrderCode = noticeOrder.OrderCode;
+                Update(synOrder);
+                DB.SaveChanges();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        #endregion
+
+        #region 创建工单实体
+        /*
+         因为数据库中所有字段尽量为not null，故工单实体中字段需要手动赋值
+         这部分代码全是返回工单实体
+         */
+        /// <summary>
+        /// 创建PD工单实体
+        /// </summary>
+        /// <returns></returns>
+        public EMS_PDMWorkOrder _CreatePDMWorkOrder()
+        {
+            return new EMS_PDMWorkOrder()
+            {
+                OrderCode = "",
+                OrderType = "",
+                OrderTitle = "",
+                OriginType = "",
+                OriginCode = "",
+                SuperiorFunLocCode = "",
+                FunctionLocationCode = "",
+                SuperiorEquipCode = "",
+                EquipCode = "",
+                PlanStartTime = DateTime.Now,
+                PlanEndTime = DateTime.Now,
+                PlanFactory = "",
+                WorkCenter = "",
+                WCFactory = "",
+                LargeGroup = "",
+                ArrangeID = "",
+                MaintainShiftID = "",
+                Workers = 0,
+                WorkTime = 0,
+                MaintainTeamLead = "",
+                MaintainStartTime = null,
+                MaintainEndTime = null,
+                IsHandle = false,
+                NotHandleReason = "",
+                HitchDescDetail = "",
+                Solution = "",
+                Suggestion = "",
+                EngeerLeadSuggestion = "",
+                Status = 0,
+                CreateUserAccount = "",
+                CreateTime = DateTime.Now,
+                CreateMachine = "",
+                LatestModifyUserAccount = "",
+                LatestModifyTime = DateTime.Now,
+                LatestModifyMachine = "",
+                IsClosed = false,
+                CloseUserAccount = "",
+                CloseTime = null,
+                CloseMachine = "",
+                IsDel = 0
+            };
+        }
+        /// <summary>
+        /// 创建通知单信息
+        /// </summary>
+        /// <returns></returns>
+        public EMS_NoticeOrder _CreateNoticeOrder()
+        {
+            return new EMS_NoticeOrder()
+            {
+                OrderCode = "",
+                OrderType = "",
+                OrderTitle = "",
+                SuperiorFunLocCode = "",
+                FunctionLocationCode = "",
+                SuperiorEquipCode = "",
+                EquipCode = "",
+                Engineer = "",
+                PlanFactory = "",
+                WorkCenter = "",
+                WCFactory = "",
+                IsShutDown = false,
+                ShutDownStartDate = "",
+                ShutDownStartTime = "",
+                ShutDownEndDate = "",
+                ShutDownEndTime = "",
+                ShutDownTime = 0,
+                OriginOrderCode = "",
+                HitchDescDetail = "",
+                HitchReason = "",
+                MaintainStep = "",
+                Advice = "",
+                Suggestion = "",
+                EngeerLeadSuggestion = "",
+                Status = 0,
+                OperateType = 0,
+                IsSyncSAP = false,
+                CreateUserAccount = "",
+                CreateTime = DateTime.Now,
+                CreateMachine = "",
+                LatestModifyUserAccount = "",
+                LatestModifyTime = DateTime.Now,
+                LatestModifyMachine = ""
+            };
+        }
+        /// <summary>
+        /// 创建同步工单
+        /// </summary>
+        /// <returns></returns>
+        public EMS_SynWorkOrder _CreateSynWorkOrder()
+        {
+            return new EMS_SynWorkOrder()
+            {
+                OrderCode = "",
+                OrderType = "",
+                OrderTitle = "",
+                SuperiorFunLocCode = "",
+                FunctionLocationCode = "",
+                SuperiorEquipCode = "",
+                EquipCode = "",
+                Engineer = "",
+                StartDate = DateTime.Now,
+                EndDate = null,
+                PlanFactory = "",
+                WorkCenter = "",
+                WCFactory = "",
+                OrderStatus = 0,
+                NoticeOrderCode = "",
+                SAPCreateDate = "",
+                SAPCreateTime = "",
+                OperateType = 0,
+                IsSyncSAP = false,
+                CreateUserAccount = "",
+                CreateTime = DateTime.Now,
+                CreateMachine = "",
+                LatestModifyUserAccount = "",
+                LatestModifyTime = DateTime.Now,
+                LatestModifyMachine = ""
+            };
+        }
+        /// <summary>
+        /// 创建工单维修工
+        /// </summary>
+        /// <returns></returns>
+        public EMS_WorkOrderMaintain _WorkOrderMaintain()
+        {
+            return new EMS_WorkOrderMaintain()
+            {
+                OrderCode = "",
+                OrderType = "",
+                Process = "",
+                MaintainUser = "",
+                IsPrimary = false,
+                MaintainStartTime = DateTime.Now,
+                MaintainEndTime = null,
+                WorkTime = 0,
+                Unit = "H",
+                PlanFactory = "",
+                WorkCenter = "",
+                WCFactory = "",
+                IsSyncSAP = true,
+                CreateUserAccount = "",
+                CreateTime = DateTime.Now,
+                CreateMachine = "",
+                LatestModifyUserAccount = "",
+                LatestModifyTime = DateTime.Now,
+                LatestModifyMachine = "",
+                TaskId = ""
+            };
+        }
+
+        #endregion
+    }
+}

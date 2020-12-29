@@ -1,0 +1,231 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using System.Web.Mvc;
+
+
+namespace DAL
+{
+    /// <summary>
+    /// 出门证操作类
+    /// </summary>
+    public class CMZOP : BaseOP
+    {
+        public CMZOP(string CompanyCode)
+        {
+            CompanyCode = CompanyCode;
+        }
+        #region 获取数据接口
+        /// <summary>
+        /// 获取物流路径
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetShippingRouteList()
+        {
+            var data = from a in DB.LGS_ShippingRoute
+                       select new SelectListItem()
+                       {
+                           Text = a.RouteName,
+                           Value = a.RouteCode
+                       };
+            return data.ToList();
+        }
+        /// <summary>
+        /// 获取物流路径模型
+        /// </summary>
+
+        /// <param name="routeCode">路径编号</param>
+        /// <returns></returns>
+        public LGS_ShippingRoute GetShippingRouteModel(string routeCode)
+        {
+            return GetData<LGS_ShippingRoute>(p => p.RouteCode == routeCode);
+        }
+        /// <summary>
+        /// 获取出门证业务类型
+        /// </summary>
+        /// <returns></returns>
+        public List<SelectListItem> GetCMZOrderTypeList()
+        {
+            var data = from a in DB.SYS_GlobalDic
+                       where a.CodeName == "CMZBusyType"
+                       select new SelectListItem()
+                       {
+                           Text = a.Desc,
+                           Value = a.CodeValue
+                       };
+            return data.ToList();
+        }
+
+        /// <summary>
+        /// 根据出门证类型获取未开出门证的订单信息
+        /// </summary>
+        /// <param name="cmzType">出门证类型</param>
+        /// <returns></returns>
+        public List<SelectListItem> GetCMZOrderListByCmzType(string cmzType)
+        {
+            List<SelectListItem> selectItems = new List<SelectListItem>();
+            try
+            {
+                var outbillList =
+                from tempList in DB.WMS_StkOutDet
+                where (tempList.Qty - tempList.LeaveQty > 0)
+                select tempList.OutBillGuid;
+
+                var mstrs = (from b in DB.WMS_StkOutMstr
+                             where outbillList.Contains(b.OutBillGuid) 
+                             group b by new { b.RefOrderGuid } into g
+                             select new
+                                 {
+                                     RefOrderGuid = g.Key.RefOrderGuid
+                                 }).ToList();
+                mstrs.ForEach(
+                    m =>
+                    {
+                        if (IsInOrderofCMZType(m.RefOrderGuid, cmzType))
+                        {
+                            SelectListItem item = new SelectListItem();
+                            item.Text = cmzType;
+                            item.Value = m.RefOrderGuid;
+                            selectItems.Add(item);
+                        }
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return selectItems;
+        }
+        /// <summary>
+        /// 根据订单号获取可以出库的记录
+        /// </summary>
+        /// <param name="orderNo">订单号</param>
+        /// <returns></returns>
+        public List<WMS_StkOutDet> GetCanLeaveStkOutDet(List<SelectListItem> orderNo, string factoryCode)
+        {
+            List<string> tempL = new List<string>();
+            orderNo.ForEach(
+                p =>
+                {
+                    tempL.Add(p.Value);
+                }
+            );
+            var outbillList =
+                 from tempList in DB.WMS_StkOutDet
+                 join mstr in DB.WMS_StkOutMstr on tempList.OutBillGuid equals mstr.OutBillGuid into temp
+                 from t in temp.DefaultIfEmpty()
+                 where (tempList.Qty - tempList.LeaveQty > 0 && tempL.Contains(t.RefOrderGuid) && t.FactoryCode == factoryCode)
+                 select tempList;
+
+            return outbillList.ToList();
+        }
+        /// <summary>
+        /// 检查是否在订单出门证类型对应的订单中
+        /// </summary>
+        /// <param name="orderNo">订单号</param>
+        /// <param name="cmzType">出门证类型</param>/param>
+        /// <returns></returns>
+        public bool IsInOrderofCMZType(string orderNo, string cmzType)
+        {
+            bool inOrder = false;
+            try
+            {
+                if (!string.IsNullOrEmpty(cmzType))
+                {
+                    switch (cmzType)
+                    {
+                        case "SO":
+                            inOrder = DB.LGS_SalesAgreement.Any(p => p.SaleAgrmNo == orderNo);
+                            break;
+                        case "JB":
+                            inOrder = DB.LGS_DeliveryMstr.Any(p => p.OrderNo == orderNo);
+                            break;
+                        case "JIS":
+                            inOrder = DB.LGS_JISOrder.Any(p => p.SeqOrderNo == orderNo);
+                            break;
+                        case "TO31":
+                            inOrder = DB.WMS_TOMstr.Any(p => p.TOGuid == orderNo && p.TOType == "30");
+                            break;
+                        case "TO50":
+                            inOrder = DB.WMS_TOMstr.Any(p => p.TOGuid == orderNo && p.TOType == "50");
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            catch
+            {
+                inOrder = false;
+            }
+            return inOrder;
+        }
+        #endregion
+        /// <summary>
+        /// 创建出门证主表
+        /// </summary>
+        /// <param name="cmzMstr"></param>
+        /// <returns></returns>
+        public int CreateCmzMstr(LGS_CMZMstr cmzMstr)
+        {
+            Insert<LGS_CMZMstr>(cmzMstr);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 创建出门证明细
+        /// </summary>
+        /// <param name="cmzDet"></param>
+        /// <returns></returns>
+        public int CreatecmzDet(LGS_CMZDet cmzDet)
+        {
+            Insert<LGS_CMZDet>(cmzDet);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 创建出门证订单
+        /// </summary>
+        /// <param name="cmzOrderMstr"></param>
+        /// <returns></returns>
+        public int CreatecmzOrderMstr(LGS_CMZOrderMstr cmzOrderMstr)
+        {
+            Insert<LGS_CMZOrderMstr>(cmzOrderMstr);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 创建出门证订单明细
+        /// </summary>
+        /// <param name="cmzOrderDet"></param>
+        /// <returns></returns>
+        public int CreatecmzOrderDet(LGS_CMZOrderDet cmzOrderDet)
+        {
+            Insert<LGS_CMZOrderDet>(cmzOrderDet);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 创建货运单
+        /// </summary>
+        /// <param name="shippingFreight"></param>
+        /// <returns></returns>
+        public int CreateShippingFreight(LGS_ShippingFreight shippingFreight)
+        {
+            Insert<LGS_ShippingFreight>(shippingFreight);
+            return SaveChanges();
+        }
+        /// <summary>
+        /// 检查是否存在出门证编号
+        /// </summary>
+        /// <param name="cmzNo">出门证编号</param>
+        /// <returns></returns>
+        public bool IsExistCmzNo(string cmzNo)
+        {
+            return DB.LGS_CMZMstr.Any(p => p.CMZCode == cmzNo);
+        }
+   
+        #region 操作接口
+        #endregion
+    }
+}

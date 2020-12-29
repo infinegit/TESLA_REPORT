@@ -1,0 +1,190 @@
+﻿@model IEnumerable<I.Report.DAL.RPT_Company>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<form action="@Url.Action("Index")" method="post" id="indexForm">
+
+    <script type="text/javascript">
+        $(function () {
+            @*InitialDataGrid({
+                datatable:"datagrid",
+                toolbar: "toolbar",
+                total:@ViewBag.TotalRecords,
+                pageSize:@ConstInfo.PAGE_SIZE,
+                pageNumber:@ViewBag.PageNumber
+                });*@
+
+            $('#datagrid').datagrid({
+                //height: 340,
+                url: '@Url.Action("GetFactoryList")',
+                method: 'POST',
+                striped: true,
+                fitColumns: true,
+                singleSelect: true,
+                rownumbers: true,
+                pagination: true,
+                nowrap: false,
+                toolbar: "toolbar",
+                showFooter: true,
+                queryParams: { txtSearch: $("#txtSearch").val()},
+                toolbar: "toolbar",
+                columns: [[
+                    { field: 'ID', checkbox: true },
+                    { field: 'FacID', title: 'Factory number', width: 40, align: 'left' },
+                    { field: 'FacName', title: 'Name of factory', width: 60, align: 'left' },
+                    { field: 'FacAddress', title: 'Factory address', width: 150, align: 'left' },
+                    { field: 'ConnectStr', title: 'Connection string', width: 250, align: 'left' }
+                     
+                                   
+                ]]
+            });
+
+            var p = $('#datagrid').datagrid('getPager'); 
+            $(p).pagination({             
+                pageNumber:1, //默认显示第几页   
+                pageSize:@ConstInfo.PAGE_SIZE,   
+                beforePageText:'第',  
+                afterPageText:'页     共{pages}页',  
+                displayMsg:'Displaying {from} to {to} of {total} items' 
+            })
+
+            $("#add").click(function(){
+                openDlg({
+                    url:"@Url.Action("Create")",
+                    title:"newly build"
+            });
+        });
+
+            $("#modify").click(function(){
+                
+                var row= $("#datagrid").datagrid('getSelected');
+                if(row==null||row==undefined)
+                {
+                    $.messager.alert("Tips","No rows are selected！");
+                    return;
+                }
+                openDlg({
+                    url:"@Url.Action("Edit")?id="+row.ID,
+                      title:"Edit"
+                  });
+              });
+
+            $("#delete").click(function(){
+               
+                var row= $("#datagrid").datagrid('getSelected');
+                if(row==null||row==undefined)
+                {
+                    $.messager.alert("Tips","No rows are selected！");
+                    return;
+                }
+
+                $.messager.confirm("Tips","Are you sure you want to delete this data？",function(r){
+                    if(r){
+                        $.post("@Url.Action("Delete")",{id:row.ID},function(result){
+                              if(result.state=="success"){
+                                  refush();
+                              }
+                              else{
+                                  $.messager.alert("Error","Deletion failed！","error");
+                              }
+                          });
+                      }
+                  });
+
+              });
+
+            $("#txtSearch").keydown(function(e){
+                var keyCode;
+                if (window.event) {
+                    keyCode = e.keyCode;
+                }
+                else if (e.which) {
+                    keyCode = e.which;
+                }
+                if (keyCode == 13) {
+                    $("#indexForm").attr("method","get");
+                    $("#indexForm").submit();
+                }
+            });
+
+            $("#search").click(function(){
+                $("#indexForm").attr("method","get");
+                $("#indexForm").submit();
+            });
+
+        });
+
+        function refush()
+        { 
+            $('#datagrid').datagrid('load', {
+
+            });
+
+        }
+    </script>
+    <div id="toolbar" style="width: 100%;">
+
+        <div>
+            <a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">Add</a>
+            <a id="modify" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">Edit</a>
+            <a id="delete" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'">Delete</a>
+        </div>
+
+        <div style="margin: 10px 0;">
+            <span style="padding: 0 5px;">
+                keyword：@Html.TextBox("txtSearch")
+            </span>
+            <span style="padding: 0 5px;">
+                <a id="search" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search'">Select</a>
+            </span>
+        </div>
+    </div>
+
+
+    <div>
+        <table id="datagrid" title="Information list" style="width: 100%; height: auto; border: 1px solid #ccc;">
+           @* <thead>
+                <tr>
+                    <th data-options="field:'ID',checkbox:true"></th>
+                    <th data-options="field:'FacID'">
+                        @Html.DisplayNameFor(model => model.FacID)
+                    </th>
+                    <th data-options="field:'FacName'">
+                        @Html.DisplayNameFor(model => model.FacName)
+                    </th>
+                    <th data-options="field:'FacAddress'">
+                        @Html.DisplayNameFor(model => model.FacAddress)
+                    </th>
+                    <th data-options="field:'ConnectStr'">
+                        @Html.DisplayNameFor(model => model.ConnectStr)
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @item.ID
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.FacID)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.FacName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.FacAddress)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.ConnectStr)
+                        </td>
+                    </tr>
+                }
+            </tbody>*@
+
+        </table>
+    </div>

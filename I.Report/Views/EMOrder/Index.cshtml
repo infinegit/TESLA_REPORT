@@ -1,0 +1,223 @@
+﻿@model YFPO.MES.Models.EMOrderModel
+
+@{
+    ViewBag.Title = "EM工单维护";
+    var roleCodes = ViewBag.RoleCodes as List<SelectListItem>;
+    var orderStatus = ViewBag.OrderStatus as List<SelectListItem>;
+
+
+    var ComData = new List<SelectListItem>();
+    {
+        SelectListItem selectlistitem = new SelectListItem();
+        selectlistitem.Text = "全部";
+        selectlistitem.Value = "100";
+        ComData.Add(selectlistitem);
+    }
+    {
+        SelectListItem selectlistitem = new SelectListItem();
+        selectlistitem.Text = "自己";
+        selectlistitem.Value = "10";
+        ComData.Add(selectlistitem);
+    }
+}
+
+@*<form action="@Url.Action("Index")" method="post" id="indexForm">*@
+
+<script type="text/javascript">
+    $(function () {
+        if ($("#roleCode").val() == "EMSMaintain") {
+            //document.getElementById(selspan).style.display="";
+            $("#selspan").show();
+        } else {
+            //document.getElementById(selspan).style.display="none";
+            $("#selspan").hide();
+        }
+        $("#datagrid").datagrid({
+            url: "@Url.Action("GetEmOrderListFilter")" + "?filterType=" + $("#filterType").val() + "&roleCode=" + $("#roleCode").val() + "&txtSearch=" + $("#txtSearch").val() + "&orderStaus=" + $("#orderStatus").val(),
+            striped: true,
+            fitColumns: true,
+            singleSelect: true,
+            rownumbers: true,
+            pagination: true,
+            nowrap: false,
+            toolbar: "toolbar",
+            //pageList: [10, 20, 50, 100, 150, 200],
+            showFooter: true,
+            queryParams: { txtSearch: $("#txtSearch").val() },
+            columns: [[
+                { field: 'ID', checkbox: true },
+            { field: 'OrderCode', title: '工单', width: 50, align: 'left' },
+            { field: 'OrderTitle', title: '标题', width: 100, align: 'left' },
+            { field: 'SuperiorFunLocCodeName', title: '功能位置1', width: 50, align: 'left' },
+            { field: 'FunctionLocationCodeName', title: '功能位置2', width: 50, align: 'left' },
+            { field: 'MachinePos', title: '机台位置', width: 70, align: 'left' },
+            { field: 'SuperiorEquipCodeName', title: '设备', width: 50, align: 'left' },
+            { field: 'EquipCodeName', title: '子设备', width: 50, align: 'left' },
+            { field: 'CreateUserName', title: '创建人', width: 50, align: 'left' },
+            {
+                field: 'CreateTime', title: '创建时间', formatter: function (date) {
+                    if (date) {
+                        var pa = /.*\((.*)\)/;
+                        var unixtime = date.match(pa)[1].substring(0, 10);
+                        return getTime(unixtime);
+                    } else {
+                        return '1900-1-1 00:00:00';
+                    }
+                }, width: 80, align: 'left'
+            },
+            { field: 'StatusName', title: '状态', width: 50, align: 'left' }
+            ]]
+        });
+
+        var p = $("#datagrid").datagrid("getPager");
+        $(p).pagination({
+            pageNumber: 1,
+            pageSize:@ConstInfo.PAGE_SIZE,
+            showPageList:false,
+            beforePageText:'第',  
+            afterPageText:'页 共{pages}页',  
+            displayMsg:'Displaying {from} to {to} of {total} items'
+        });
+
+        $("#add").click(function () {
+            openDlg({
+                url: "@Url.Action("Create")/?roleCode=" + $("#roleCode").val(),
+                title: "新建",
+                width: 500,
+                height: 470
+            });
+        });
+
+        $("#modify").click(function() {
+
+            var row = $("#datagrid").datagrid('getSelected');
+            if (row == null || row == undefined) {
+                $.messager.alert("提示", "未选中任何行！");
+                return;
+            }
+            openDlg({
+                url: "@Url.Action("Edit")/?emOrderCode=" + row.OrderCode + "&roleCode=" + $("#roleCode").val(),
+                title: "编辑",
+                width: 500,
+                height: 400
+            });
+        });
+
+        $("#maintainers").click(function() {
+            var row = $("#datagrid").datagrid('getSelected');
+            if (row == null || row == undefined) {
+                $.messager.alert("提示", "未选中任何行！");
+                return;
+            }
+            openDlg({
+                url: "@Url.Action("Maintainer")/?OrderCode=" + row.OrderCode,
+                title: "维修工时",
+                width:800
+            });
+
+        });
+
+        $("#orderPart").click(function() {
+            var row = $("#datagrid").datagrid('getSelected');
+            if (row == null || row == undefined) {
+                $.messager.alert("提示", "未选中任何行！");
+                return;
+            }
+            openDlg({
+                url: "@Url.Action("OrderPart")/?OrderCode=" + row.OrderCode,
+                title: "领料信息",
+                width:800
+            });
+
+        });
+
+        $("#txtSearch").keydown(function (e) {
+            var keyCode;
+            if (window.event) {
+                keyCode = e.keyCode;
+            }
+            else if (e.which) {
+                keyCode = e.which;
+            }
+            if (keyCode == 13) {
+                $("#indexForm").attr("method","get");
+                $("#indexForm").submit();
+            }
+        });
+
+        $("#search").click(function () {
+            $("#indexForm").attr("method","get");
+            $("#indexForm").submit();
+        });
+
+        $("#roleCode").change(function() {
+
+
+            $("#indexForm").attr("method", "get");
+            $("#indexForm").submit();
+
+
+        });
+
+        $("#orderStatus").change(function() {
+            $('#datagrid').datagrid('load',"@Url.Action("GetEmOrderList")" + "?filterType=" + $("#filterType").val() + "&roleCode=" + $("#roleCode").val() + "&txtSearch=" + $("#txtSearch").val() + "&orderStaus=" + $("#orderStatus").val());
+        });
+
+        $("#filterType").change(function() {
+            $('#datagrid').datagrid('load',"@Url.Action("GetEmOrderListFilter")" + "?filterType=" + $("#filterType").val() + "&roleCode=" + $("#roleCode").val() + "&txtSearch=" + $("#txtSearch").val() + "&orderStaus=" + $("#orderStatus").val());
+        });
+    });
+    function refush()
+    { 
+
+        $('#datagrid').datagrid('reload');
+
+    }
+
+</script>
+<div id="toolbar" style="width: 100%;">
+
+    <div>
+        <span style="display:@(roleCodes.FirstOrDefault(p => p.Selected).Value == "EMSMaintain" ? "normal" : "none")">
+            <a id="add" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'">新增</a>
+        </span>
+        <a id="modify" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'">修改</a>
+        <a id="maintainers" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-man'">维修工</a>
+        <a id="orderPart" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-redo'">领料信息</a>
+    </div>
+    <form action="@Url.Action("Index")" method="post" id="indexForm">
+        <div style="margin: 10px 0;">
+            @{
+                if (roleCodes.Count > 1)
+                {
+                    <span style="font-size: 15px; padding: 0 5px;">角色:@Html.DropDownList("roleCode", roleCodes.Distinct(), new {style = "width:150px;font-size:15px;"})</span>
+
+                }
+                else
+                {
+                    <input type="hidden" id="roleCode" name="roleCode" value="@(roleCodes.FirstOrDefault() == null ? "" : roleCodes.FirstOrDefault().Value)"/>
+                }
+            }
+            <span style="font-size: 15px; padding: 0 5px;">状态:@Html.DropDownList("orderStatus", orderStatus, new { style = "width:150px;font-size:15px;" })</span>
+
+                <span style="font-size: 15px" id="selspan">范围选择 @Html.DropDownList("filterType", ComData)</span>
+@*            @Html.SelectList_Category("roleCode")*@
+
+
+            <span style="padding: 0 5px;">关键字：@Html.TextBox("txtSearch")
+            </span>
+            <span style="padding: 0 5px;">
+                <a id="search" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search'">查询</a>
+            </span>
+        </div>
+    </form>
+</div>
+
+
+<div>
+    <table id="datagrid" title="信息列表" style="width: 100%; height: auto; border: 1px solid #ccc;">
+    </table>
+</div>
+@*<div id ="maintainerDlg">
+</div>*@
+@*</form>*@

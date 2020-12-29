@@ -1,0 +1,96 @@
+﻿@{
+    ViewBag.Title = "Add";
+}
+@using Resources
+<form>
+    <table class="info">
+        <tr>
+            <td class="label">@Html.Label(Resource.Process_code):</td>
+            <td class="field">
+                <input id="addForm_RoteName" name="addForm_RoteName" class="easyui-combogrid" data-options="required:true" style="width:250px" />
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">@Html.Label(Resource.PartNo):</td>
+            <td class="field">
+                <input id="addForm_PartNo" name="addForm_PartNo" class="easyui-combogrid" data-options="required:true" style="width:250px" />
+            </td>
+        </tr>
+    </table>
+    <div style="padding: 5px; text-align: center;">
+        <a href="javascript:void(0)" id="addForm_Save" class="easyui-linkbutton" icon="icon-ok">@Html.Label(Resource.Add)</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" icon="icon-cancel" onclick="closeDlg()">@Html.Label(Resource.Cancel)</a>
+    </div>
+</form>
+
+<script type="text/javascript">
+
+    $(document).ready(function ()
+    {
+        //set rote
+        $('#addForm_RoteName').combogrid({
+            delay: 500,
+            mode: 'remote',
+            url: '@Url.Action("getRouteList")',
+            idField: 'ID',
+            textField: 'RoteName',
+            columns: [[
+                { field: 'ID', title: 'ID', width: 80, sortable: true,hidden:true },
+                { field: 'RoteCode', title:'@Html.Label(Resource.Rote_Code)', width: 120, sortable: true },
+                { field: 'RoteName', title:'@Html.Label(Resource.Rote_Name)', width: 140, sortable: true }
+            ]]
+        });
+        //set part
+        $('#addForm_PartNo').combogrid({
+            delay: 500,
+            mode: 'remote',
+            url: '@Url.Action("getPartList")',
+            idField: 'PartNo',
+            textField: 'Description',
+            columns: [[
+                { field: 'PartNo', title:'@Html.Label(Resource.PartNo)', width: 120, sortable: true },
+                { field: 'Description', title:'@Html.Label(Resource.Description)' , width: 140, sortable: true }
+            ]]
+        })
+    });
+    //提交数据
+    $('#addForm_Save').click(function () {
+        var g = $('#addForm_RoteName').combogrid('grid');	// get datagrid object
+        var r = g.datagrid('getSelected');	// get the selected row
+        var roteID = r.ID;
+
+        alert(roteID);
+        var g = $('#addForm_PartNo').combogrid('grid');	// get datagrid object
+        var r = g.datagrid('getSelected');	// get the selected row
+        var partNo = r.PartNo;
+
+        if (roteID == "" || roteID == null || roteID == undefined) {
+            $.messager.alert('@Html.Label(Resource.Error)','@Html.Label(Resource.Please_Select_Route)');
+        }
+        if (partNo == "" || partNo == null || partNo == undefined) {
+            $.messager.alert('@Html.Label(Resource.Error)', '@Html.Label(Resource.Please_Select_Part)');
+        }
+
+        $.messager.confirm('@Html.Label(Resource.info)','@Html.Label(Resource.Are_you_Sure_to_submit)', function (r) {
+            if (r) {
+                var req = new Object();
+                var data =
+                    {
+                        RouteID: roteID,
+                        PartNo: partNo
+                    };
+                req["roteConfig"] = JSON.stringify(data);
+                $.post("@Url.Action("AddRoteConfig")", req, function (result) {
+                    if (result.state === "success") {
+                        closeDlg();
+                        datagrid();
+                        $.messager.alert('@Html.Label(Resource.info)','@Html.Label(Resource.Add_Success)');
+                    } else {
+                        $.messager.alert('@Html.Label(Resource.Error)', result.message, '@Html.Label(Resource.Error)');
+                    }
+                });
+            };
+        });
+    });
+</script>

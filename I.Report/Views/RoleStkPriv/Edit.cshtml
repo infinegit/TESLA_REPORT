@@ -1,0 +1,134 @@
+﻿@model I.MES.Models.SYS_RoleStkPriv
+@{
+    Layout = null;
+}
+<form action="@Url.Action("Edit")" method="post" id="editForm">
+    @Html.AntiForgeryToken()
+    <table class="info">
+        <tr>
+            <td class="label">ID
+            </td>
+            <td class="field">
+                @Html.TextBoxFor(model => model.ID,  new { readOnly = "true" })
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                Role code
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.RoleCode)
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                Location code
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.StkCode)
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                Whether allow Warehousing
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.AllowIn)
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                Whether allow Warehouse out
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.AllowOut)
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                Whether allow upper shelf
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.AllowUpBin)
+            </td>
+            <td class="tip"></td>
+        </tr>
+        <tr>
+            <td class="label">
+                Whether Allow off the shelf
+            </td>
+            <td class="field">
+                @Html.EditorFor(model => model.AllowDownBin)
+            </td>
+            <td class="tip"></td>
+        </tr>
+        @*<tr>
+        <td class="label">
+             @Html.DisplayNameFor(model => model.CreateUserAccount)
+        </td>
+        <td class="field">
+            @Html.EditorFor(model => model.CreateUserAccount)
+        </td>
+        <td class="tip"></td>
+		</tr>
+        <tr>
+        <td class="label">
+             @Html.DisplayNameFor(model => model.CreateMachine)
+        </td>
+        <td class="field">
+            @Html.EditorFor(model => model.CreateMachine)
+        </td>
+        <td class="tip"></td>
+		</tr>
+        <tr>
+        <td class="label">
+             @Html.DisplayNameFor(model => model.CreateTime)
+        </td>
+        <td class="field">
+            @Html.EditorFor(model => model.CreateTime)
+        </td>
+        <td class="tip"></td>
+		</tr>
+        <tr>
+        <td class="label">
+             @Html.DisplayNameFor(model => model.LatestModifyUserAccount)
+        </td>
+        <td class="field">
+            @Html.EditorFor(model => model.LatestModifyUserAccount)
+        </td>
+        <td class="tip"></td>
+		</tr>
+        <tr>
+        <td class="label">
+             @Html.DisplayNameFor(model => model.LatestModifyTime)
+        </td>
+        <td class="field">
+            @Html.EditorFor(model => model.LatestModifyTime)
+        </td>
+        <td class="tip"></td>
+		</tr>
+        <tr>
+        <td class="label">
+             @Html.DisplayNameFor(model => model.LatestModifyMachine)
+        </td>
+        <td class="field">
+            @Html.EditorFor(model => model.LatestModifyMachine)
+        </td>
+        <td class="tip"></td>
+		</tr>*@
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitDlg('editForm')">提交</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDlg()">取消</a>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+</form>
+

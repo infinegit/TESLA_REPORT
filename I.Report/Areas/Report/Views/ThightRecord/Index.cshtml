@@ -1,0 +1,102 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@Scripts.Render("~/Scripts/highcharts/Report.js")
+<table id="divSearch" cellspacing="10">
+    <tr>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BarCode:</td>
+        <td>
+            <input class="easyui-textbox" id="SerialNum" name="SerialNum" operator="like" style="width: 180px" />
+        </td>
+        <td>OprateTime：</td>
+        <td>
+            <input class="easyui-datetimebox" operator=">=" columnname="CreateTime" id="CreateTimeB" style="width: 180px" />
+        </td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To：</td>
+        <td>
+            <input class="easyui-datetimebox" operator="<=" columnname="CreateTime" id="CreateTimeE" style="width: 180px" />
+        </td>
+
+    </tr>
+    <tr>
+
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PartNo:</td>
+        <td>
+            <input class="easyui-textbox" id="PartNo" name="PartNo" style="width: 180px" />
+        </td>
+        <td>StationCode:</td>
+        <td>
+            <input class="easyui-textbox" id="StationCode" name="StationCode" style="width: 180px" />
+        </td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ItemName:</td>
+        <td>
+            <input class="easyui-textbox" id="ItemName" name="ItemName" style="width: 180px" />
+        </td>
+
+    </tr>
+    <tr>
+        <td>
+            <a id="btnSearch" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-search'" onclick="">Select</a>
+        </td>
+        <td>
+            <a id="btnExport" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-export'" onclick="">Export</a>
+        </td>
+    </tr>
+</table>
+<div class="easyui-panel" title="ThightRecord Query">
+    <table id="datagrid" data-options="singleSelect:true">
+    </table>
+</div>
+<script type="text/javascript">
+    $(function () {
+        var nowDate = new Date();
+        var yesterdayTime = nowDate.setDate(nowDate.getDate() - 30);
+        var yesterday = new Date(yesterdayTime);
+        $('#CreateTimeB').datetimebox('setValue', formatDate(yesterday, "yyyy-MM-dd 00:00:00"));//前一天时间
+        $("#CreateTimeE").datetimebox("setValue", new Date().toLocaleDateString());//当前时间
+
+        BindGrid();
+        $('#SerialNum').textbox().next('span').find('input').focus();
+        $("#SerialNum").textbox("textbox").bind("keypress", function (e) {
+            if (e.keyCode == 13) {
+                Datagrid.Search("#divSearch");
+                $("#SerialNum").textbox("textbox").select();
+            }
+        });
+    })
+    $("#btnSearch").click(function () {
+        Datagrid.Search("#divSearch");
+    });
+    function BindGrid() {
+        Datagrid.ViewName = "PP_ThightRecord";
+        Datagrid.SortColumn = "CreateTime";
+        Datagrid.Columns = [[
+                     { field: 'ID', title: 'ID', width: '100px', align: 'center', hidden: true },
+                     { field: 'SerialNum', title: 'SerialNum', width: '140px', align: 'center' },
+                     { field: 'PartNo', title: 'PartNo', width: '180px', align: 'center' },
+                     { field: 'StationCode', title: 'StationCode', width: '100px', align: 'center' },
+                     { field: 'ItemName', title: 'ItemName', width: '150px', align: 'center' },
+                     { field: 'ScrewNo', title: 'ScrewNo', width: '80px', align: 'center' },
+                     { field: 'PlantNo', title: 'PlantNo', width: '100px', align: 'center' },
+                     { field: 'Trque', title: 'Trque', width: '80px', align: 'center' },
+                     { field: 'Angel', title: 'Angel', width: '80px', align: 'center' },
+                     { field: 'X', title: 'X', width: '80px', align: 'center' },
+                     { field: 'Y', title: 'Y', width: '80px', align: 'center' },
+                     { field: 'ThightTime', title: 'ThightCount', width: '80px', align: 'center' },
+                     { field: 'Result', title: 'Result', width: '80px', align: 'center' },
+                     { field: 'CreateTime', title: 'CreateTime', width: '150px', align: 'center' },
+                     { field: 'CreateUser', title: 'CreateUser', width: '100px', align: 'center' },
+                     { field: 'CreateMachine', title: 'CreateMachine', width: '150px', align: 'center' },
+
+        ]];
+        Datagrid.URL = "@Url.Action("GetReportData", "Report")";
+        Datagrid.Pagination = false;
+        Datagrid.Init();
+
+    }
+    $("#btnExport").click(function () {
+        Datagrid.Export("@Url.Action("ExportOut", "Report")");
+    });
+</script>
